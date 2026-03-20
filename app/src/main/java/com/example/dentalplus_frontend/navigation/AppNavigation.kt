@@ -14,6 +14,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.*
 import com.example.dentalplus_frontend.R
 import com.example.dentalplus_frontend.ui.*
+import com.example.dentalplus_frontend.ui.theme.Blue40
 import com.example.dentalplus_frontend.utils.Constants
 
 @Composable
@@ -88,7 +89,14 @@ fun BottomBar(navController: NavController) {
                         icon = {
                             Icon(navItem.icon, contentDescription = navItem.label)
                         },
-                        label = { Text(navItem.label) }
+                        label = { Text(navItem.label) },
+                        colors = NavigationBarItemColors(selectedIndicatorColor = Color.Transparent,
+                            selectedIconColor = Blue40,
+                            selectedTextColor = Blue40,
+                            unselectedIconColor = Color.Gray,
+                            unselectedTextColor = Color.Gray,
+                            disabledIconColor = Color.LightGray,
+                            disabledTextColor = Color.LightGray)
                     )
                 }
             }

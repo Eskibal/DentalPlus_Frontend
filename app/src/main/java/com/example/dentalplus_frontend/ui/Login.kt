@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
@@ -84,6 +85,8 @@ fun LoginScreen(modifier: Modifier, onLoginClick: () -> Unit) {
                     onValueChange = { username = it },
                     label = { Text("Usuario") },
                     leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.large,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -92,6 +95,8 @@ fun LoginScreen(modifier: Modifier, onLoginClick: () -> Unit) {
                     onValueChange = { password = it },
                     label = { Text("Contraseña") },
                     leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.large,
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     modifier = Modifier.fillMaxWidth()

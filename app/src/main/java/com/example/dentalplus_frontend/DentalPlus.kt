@@ -1,5 +1,6 @@
 package com.example.dentalplus_frontend
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +14,7 @@ import com.example.dentalplus_frontend.navigation.AppNavigation
 import com.example.dentalplus_frontend.ui.theme.DentalPlus_FrontendTheme
 
 class MainActivity : ComponentActivity() {
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
