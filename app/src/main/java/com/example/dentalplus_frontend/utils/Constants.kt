@@ -4,21 +4,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.DateRange
-import androidx.compose.material.icons.outlined.List
 import androidx.compose.material.icons.outlined.Person
-import com.example.dentalplus_frontend.models.BottomNavItem
+import com.example.dentalplus_frontend.model.BottomNavItem
 
 object Constants {
     val BottomNavItems = listOf(
         // Home screen
         BottomNavItem(
-            label = "Home",
+            label = "Inici",
             icon = Icons.Filled.Home,
             route = "home"
         ),
         // Patients screen
         BottomNavItem(
-            label = "Patients",
+            label = "Pacients",
             icon = Icons.AutoMirrored.Outlined.List,
             route = "patients"
         ),
@@ -30,7 +29,7 @@ object Constants {
         ),
         // Profile screen
         BottomNavItem(
-            label = "Profile",
+            label = "Perfil",
             icon = Icons.Outlined.Person,
             route = "profile"
         ),

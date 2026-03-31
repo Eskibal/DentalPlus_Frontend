@@ -1,4 +1,4 @@
-package com.example.dentalplus_frontend.models
+package com.example.dentalplus_frontend.model
 
 import androidx.compose.ui.graphics.vector.ImageVector
 

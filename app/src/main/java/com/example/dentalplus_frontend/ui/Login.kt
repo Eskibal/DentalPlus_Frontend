@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
+import com.example.dentalplus_frontend.navigation.Header
 
 @Composable
 fun LoginScreen(modifier: Modifier, onLoginClick: () -> Unit) {
@@ -50,14 +51,7 @@ fun LoginScreen(modifier: Modifier, onLoginClick: () -> Unit) {
         modifier = modifier.fillMaxSize(),
         Arrangement.SpaceBetween
     ) {
-
-        Image(
-            painter = painterResource(R.drawable.generic_header_wave),
-            contentDescription = null,
-            modifier = Modifier.fillMaxWidth(),
-            contentScale = ContentScale.Crop
-        )
-
+        Header()
         Surface(
             modifier = Modifier
                 .padding(horizontal = 20.dp)
@@ -73,27 +67,24 @@ fun LoginScreen(modifier: Modifier, onLoginClick: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 Text(
-                    "Inicio de sesión",
+                    "Inici de sessió",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
-                    label = { Text("Usuario") },
+                    label = { Text("Usuari") },
                     leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
                     singleLine = true,
                     shape = MaterialTheme.shapes.large,
                     modifier = Modifier.fillMaxWidth()
                 )
-
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Contraseña") },
+                    label = { Text("Contrasenya") },
                     leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                     singleLine = true,
                     shape = MaterialTheme.shapes.large,
@@ -101,24 +92,21 @@ fun LoginScreen(modifier: Modifier, onLoginClick: () -> Unit) {
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     modifier = Modifier.fillMaxWidth()
                 )
-
                 TextButton(
                     onClick = {},
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("¿Olvidaste tu contraseña?")
+                    Text("Has oblidat la contrasenya?")
                 }
-
                 Button(
                     onClick = onLoginClick,
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium
                 ) {
-                    Text("Iniciar sesión")
+                    Text("Iniciar sessió")
                 }
             }
         }
-
         Image(
             painter = painterResource(R.drawable.login_footer_wave_with_stucom_logo),
             contentDescription = null,
