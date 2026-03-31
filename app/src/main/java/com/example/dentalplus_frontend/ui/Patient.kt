@@ -30,6 +30,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.dentalplus_frontend.R
 import com.example.dentalplus_frontend.navigation.BottomBar
+import com.example.dentalplus_frontend.navigation.Header
 import com.example.dentalplus_frontend.navigation.Routes
 import com.example.dentalplus_frontend.ui.theme.DentalPlus_FrontendTheme
 import com.example.dentalplus_frontend.utils.Constants
@@ -39,30 +40,25 @@ fun PatientScreen(navController: NavController) {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        Image(
-            painter = painterResource(R.drawable.generic_header_wave),
-            contentDescription = null,
-            modifier = Modifier.fillMaxWidth(),
-            contentScale = ContentScale.Crop
-        )
+        Header()
         Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             PatientHeaderCard()
             Spacer(modifier = Modifier.height(20.dp))
             InfoBlock(
                 items = listOf(
                     "DNI/NIE" to "",
-                    "Teléfono" to "",
-                    "Domicilio" to "",
+                    "Telèfon" to "",
+                    "Domicili" to "",
                     "E-mail" to "",
-                    "Población" to ""
+                    "Població" to ""
                 )
             )
             Spacer(modifier = Modifier.height(20.dp))
             InfoBlock(
                 items = listOf(
-                    "Historial Clínico" to "",
-                    "Alergias" to "",
-                    "Observaciones" to ""
+                    "Historial Clínic" to "",
+                    "Al·lèrgies" to "",
+                    "Observacions" to ""
                 )
             )
             Spacer(modifier = Modifier.height(20.dp))
@@ -78,7 +74,7 @@ fun PatientHeaderCard() {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 30.dp),
+            .padding(horizontal = 30.dp).padding(top = 20.dp),
         shape = RoundedCornerShape(20.dp),
         shadowElevation = 8.dp,
         color = Color(0xFFEAEAEA)
@@ -99,13 +95,13 @@ fun PatientHeaderCard() {
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
-                    "Placeholder",
+                    "Nom Pacient",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
 
-                Text("Edad XX - Género X", color = Color.Gray)
-                Text("F. de nacim. DD/MM/YYYY", color = Color.Gray)
+                Text("Edat XX - Gènere X", color = Color.Gray)
+                Text("D. de naix. DD/MM/YYYY", color = Color.Gray)
                 Text("ID #XXXXXX", color = Color.Gray)
             }
         }
@@ -175,7 +171,7 @@ fun BigActionButton(text: String, onClick: () -> Unit = {}) {
             .padding(horizontal = 30.dp),
         shape = RoundedCornerShape(20.dp),
         shadowElevation = 6.dp,
-        onClick = onClick
+        onClick = onClick,
     ) {
         Row(
             modifier = Modifier

@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.*
@@ -14,6 +15,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.*
 import com.example.dentalplus_frontend.R
 import com.example.dentalplus_frontend.ui.*
+import com.example.dentalplus_frontend.ui.AgendaScreen
 import com.example.dentalplus_frontend.ui.theme.Blue40
 import com.example.dentalplus_frontend.utils.Constants
 
@@ -48,11 +50,27 @@ fun AppNavigation() {
         }
 
         composable(Routes.AGENDA) {
-            //AgendaScreen(navController = navController)
+            AgendaScreen(navController = navController)
         }
 
         composable(Routes.PROFILE) {
             //ProfileScreen(navController = navController)
+        }
+    }
+}
+@Composable
+fun Header() {
+    Surface(
+        modifier = Modifier.fillMaxWidth().absoluteOffset(y = (-5).dp),
+        shadowElevation = 9.dp
+    ) {
+        Box {
+            Image(
+                painter = painterResource(R.drawable.generic_header_wave),
+                contentDescription = null,
+                modifier = Modifier.fillMaxWidth(),
+                contentScale = ContentScale.Crop
+            )
         }
     }
 }
