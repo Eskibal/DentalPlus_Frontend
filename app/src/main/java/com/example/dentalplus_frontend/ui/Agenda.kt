@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Create
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Face
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
@@ -54,11 +55,7 @@ import java.util.Date
 val formatterDatePicker = DateTimeFormatter.ofPattern("dd MMMM")
 val formatterDateDialog = DateTimeFormatter.ofPattern("EEEE, dd MMMM")
 
-val appointments = listOf(
-    Appointment("10:00", "10:30", "Pacient", "Doctor", "Cita", LocalDate.now()),
-    Appointment("12:00", "12:30", "Pacient", "Doctor", "Cita", LocalDate.now()),
-    Appointment("12:30", "13:00", "Pacient", "Doctor", "Cita", LocalDate.now())
-)
+val appointments: List<Appointment> = emptyList()
 
 
 @Composable
@@ -113,6 +110,8 @@ fun AgendaScreen(navController: NavController){
                     disabledContainerColor = Color.Unspecified, disabledContentColor = Color.Unspecified),
                 modifier = Modifier.fillMaxWidth(0.5f).offset(x = (-45).dp).padding(bottom = 10.dp)
             ) {
+                Icon(Icons.Outlined.DateRange, contentDescription = null)
+                Spacer(Modifier.width(5.dp))
                 Text(
                     text = selectedDate.format(formatterDatePicker),
                     style = MaterialTheme.typography.headlineMedium,
