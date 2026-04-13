@@ -42,20 +42,22 @@ fun AppNavigation() {
 
         composable(Routes.HOME) {
             HomeScreen(navController = navController)
-
         }
 
         composable(Routes.PATIENTS) {
-            //PatientsScreen(navController = navController)
+            PatientListScreen(navController)
+        }
+
+        composable(Routes.PATIENT_DETAIL) {
+            PatientScreen(navController)
         }
 
         composable(Routes.AGENDA) {
-            AgendaScreen(navController = navController)
+            AgendaScreen(navController)
         }
 
         composable(Routes.PROFILE) {
-            //ProfileScreen(navController = navController)
-            PatientScreen(navController = navController)
+            PatientScreen(navController)
         }
     }
 }
