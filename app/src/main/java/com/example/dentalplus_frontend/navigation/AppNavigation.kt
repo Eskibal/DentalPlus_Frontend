@@ -41,8 +41,8 @@ fun AppNavigation() {
         }
 
         composable(Routes.HOME) {
-            //HomeScreen(navController = navController)
-            PatientScreen(navController = navController)
+            HomeScreen(navController = navController)
+
         }
 
         composable(Routes.PATIENTS) {
@@ -55,6 +55,7 @@ fun AppNavigation() {
 
         composable(Routes.PROFILE) {
             //ProfileScreen(navController = navController)
+            PatientScreen(navController = navController)
         }
     }
 }
