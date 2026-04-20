@@ -57,7 +57,7 @@ fun AppNavigation() {
         }
 
         composable(Routes.PROFILE) {
-            PatientScreen(navController)
+            ProfileScreen(navController)
         }
     }
 }
