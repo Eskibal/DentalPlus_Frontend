@@ -57,6 +57,8 @@ import com.example.dentalplus_frontend.utils.Constants
 fun PatientScreen(navController: NavController) {
     var showSelectionDialog by remember { mutableStateOf(false) }
 
+    var selectedOdontogramType by remember { mutableStateOf<OdontogramType?>(null) }
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -91,7 +93,11 @@ fun PatientScreen(navController: NavController) {
     }
     if(showSelectionDialog) {
         SelectionDialog(
-            onDismiss = { showSelectionDialog = false }
+            onDismiss = { showSelectionDialog = false },
+            onTypeSelected = { type ->
+                showSelectionDialog = false
+                navController.navigate("odontogram/${type.name}")
+            }
         )
     }
 }
@@ -217,7 +223,8 @@ fun BigActionButton(text: String, onClick: () -> Unit) {
 
 @Composable
 fun SelectionDialog(
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onTypeSelected: (OdontogramType) -> Unit
 )
 {
     Dialog(onDismissRequest = onDismiss) {
@@ -253,7 +260,10 @@ fun SelectionDialog(
                     Alignment.CenterVertically
                 ) {
                     Surface(
-                        onClick = {}, shape = RoundedCornerShape(10.dp),
+                        onClick = {
+                            onTypeSelected(OdontogramType.CHILD)
+                            onDismiss()
+                        }, shape = RoundedCornerShape(10.dp),
                         shadowElevation = 2.dp,
                         color = BlueGrey40, contentColor = Color.Unspecified,
                         modifier = Modifier.size(70.dp)
@@ -275,7 +285,10 @@ fun SelectionDialog(
                         }
                     }
                     Surface(
-                        onClick = {}, shape = RoundedCornerShape(10.dp),
+                        onClick = {
+                            onTypeSelected(OdontogramType.BOTH)
+                            onDismiss()
+                        }, shape = RoundedCornerShape(10.dp),
                         shadowElevation = 2.dp,
                         color = BlueGrey40, contentColor = Color.Unspecified,
                         modifier = Modifier.size(70.dp)
@@ -297,7 +310,10 @@ fun SelectionDialog(
                         }
                     }
                     Surface(
-                        onClick = {}, shape = RoundedCornerShape(10.dp),
+                        onClick = {
+                            onTypeSelected(OdontogramType.ADULT)
+                            onDismiss()
+                        }, shape = RoundedCornerShape(10.dp),
                         shadowElevation = 2.dp,
                         color = BlueGrey40, contentColor = Color.Unspecified,
                         modifier = Modifier.size(70.dp)
@@ -322,13 +338,5 @@ fun SelectionDialog(
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SelectionDialogPreview() {
-    DentalPlus_FrontendTheme {
-        SelectionDialog(onDismiss = { true })
     }
 }
