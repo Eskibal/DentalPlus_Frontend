@@ -1,8 +1,12 @@
 package com.example.dentalplus_frontend.navigation
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.*
@@ -58,6 +62,27 @@ fun AppNavigation() {
 
         composable(Routes.PROFILE) {
             ProfileScreen(navController)
+        }
+        composable("odontogram/{type}") { backStackEntry ->
+
+            val type = OdontogramType.valueOf(
+                backStackEntry.arguments?.getString("type")!!
+            )
+
+            OdontogramScreen(navController, type)
+        }
+
+        composable("quadrant/{quadrant}/{type}") { backStackEntry ->
+
+            val quadrant = Quadrant.valueOf(
+                backStackEntry.arguments?.getString("quadrant")!!
+            )
+
+            val type = OdontogramType.valueOf(
+                backStackEntry.arguments?.getString("type")!!
+            )
+
+            QuadrantZoomedScreen(navController, quadrant, type)
         }
     }
 }
