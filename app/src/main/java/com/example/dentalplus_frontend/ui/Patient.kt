@@ -43,6 +43,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.dentalplus_frontend.R
+import com.example.dentalplus_frontend.model.OdontogramType
 import com.example.dentalplus_frontend.navigation.BottomBar
 import com.example.dentalplus_frontend.navigation.Header
 import com.example.dentalplus_frontend.navigation.Routes
@@ -71,7 +72,7 @@ fun PatientScreen(navController: NavController) {
             InfoBlock(
                 items = listOf(
                     "DNI/NIE" to "",
-                    "Telèfon" to "",
+                    "Nº de Telèfon" to "",
                     "Domicili" to "",
                     "E-mail" to "",
                     "Població" to ""
@@ -243,7 +244,7 @@ fun SelectionDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Escull una edat",
+                        text = "Selecciona una edat",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -251,7 +252,6 @@ fun SelectionDialog(
                         Icon(Icons.Rounded.Close, contentDescription = null)
                     }*/
                 }
-                Divider(modifier = Modifier.padding(top = 10.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

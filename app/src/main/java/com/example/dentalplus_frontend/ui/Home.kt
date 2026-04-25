@@ -56,7 +56,7 @@ fun HomeScreen(navController: NavController, modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Agenda de hoy",
+                text = "Agenda d'avui'",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -66,7 +66,7 @@ fun HomeScreen(navController: NavController, modifier: Modifier = Modifier) {
             AppointmentItem(
                 time = "10:00 – 10:30",
                 patientName = "Julio Martínez",
-                reason = "Revisión de caries",
+                reason = "Revisió de càries",
                 doctor = "Dr. Martínez"
             )
 
@@ -75,7 +75,7 @@ fun HomeScreen(navController: NavController, modifier: Modifier = Modifier) {
             AppointmentItem(
                 time = "11:00 – 11:30",
                 patientName = "Pedro Gómez",
-                reason = "Limpieza dental",
+                reason = "Neteja dental",
                 doctor = "Dr. Gutiérrez"
             )
 
@@ -84,7 +84,7 @@ fun HomeScreen(navController: NavController, modifier: Modifier = Modifier) {
             AppointmentItem(
                 time = "11:00 – 11:30",
                 patientName = "Laura Hernández",
-                reason = "Revisión de caries",
+                reason = "Revisió de càries",
                 doctor = "Dr. Martínez"
             )
 
@@ -98,7 +98,7 @@ fun WelcomeSection(doctorName: String, modifier: Modifier = Modifier) {
     Text(
         text = buildAnnotatedString {
             withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                append("Bienvenido/a de nuevo, ")
+                append("Benvingut/da de nou, ")
             }
             withStyle(style = SpanStyle(fontWeight = FontWeight.Normal, color = Color.Gray)) {
                 append(doctorName)
@@ -117,20 +117,20 @@ fun StatsRow(modifier: Modifier = Modifier) {
     ) {
         StatCard(
             count = "14",
-            label = "Pacientes\nhoy",
+            label = "Pacients\navui",
             backgroundColor = Color(0xFFD1F5FA),
             modifier = Modifier.weight(1f)
         )
         StatCard(
             count = "5",
-            label = "Citas\npendientes",
+            label = "Cites\npendents",
             backgroundColor = Color(0xFFD1F7F1),
             modifier = Modifier.weight(1f)
         )
         StatCard(
             count = "2",
-            label = "Tratamientos",
-            subLabel = "+5 esta semana",
+            label = "Tractaments",
+            subLabel = "+5 aquesta setmana",
             backgroundColor = Color(0xFFE2F9E1),
             modifier = Modifier.weight(1f)
         )

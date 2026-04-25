@@ -104,12 +104,12 @@ fun DoctorHeaderCard() {
                 )
 
                 Text(
-                    "Especialidad: Odontólogo",
+                    "Especialitat: Odontòleg",
                     color = Color.Gray
                 )
 
                 Text(
-                    "Día laboral: Martes",
+                    "Día laboral: Dimarts",
                     color = Color.Gray
                 )
             }
@@ -147,7 +147,7 @@ fun ExpandableInfoBlock(
                 ) {
 
                     Text(
-                        "Datos",
+                        "Dades",
                         fontWeight = FontWeight.Bold
                     )
 
@@ -164,10 +164,10 @@ fun ExpandableInfoBlock(
 
                     Divider(color = Color.Gray.copy(.3f))
 
-                    InfoRow("Edad")
+                    InfoRow("Edat")
                     Divider(color = Color.Gray.copy(.3f))
 
-                    InfoRow("Género")
+                    InfoRow("Gènere")
                 }
             }
         }
@@ -188,16 +188,16 @@ fun ContactInfoBlock() {
 
         Column {
 
-            ContactRow("Correo")
+            ContactRow("E-mail")
             Divider(color = Color.Gray.copy(.3f))
 
-            ContactRow("Número de teléfono")
+            ContactRow("Nº de telèfon")
             Divider(color = Color.Gray.copy(.3f))
 
-            ContactRow("Ciudad")
+            ContactRow("Ciutat")
             Divider(color = Color.Gray.copy(.3f))
 
-            ContactRow("Dirección")
+            ContactRow("Direcció")
         }
     }
 }

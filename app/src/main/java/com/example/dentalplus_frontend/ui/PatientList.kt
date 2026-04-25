@@ -80,7 +80,7 @@ fun PatientListScreen(navController: NavController) {
                     tint = Color.Gray
                 )
             },
-            placeholder = { Text("Pacients") },
+            label = { Text("Pacients") },
             singleLine = true,
             shape = RoundedCornerShape(20.dp),
             modifier = Modifier
