@@ -1,42 +1,53 @@
 package com.example.dentalplus_frontend.ui
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.sharp.ArrowBack
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonElevation
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.dentalplus_frontend.R
-import com.example.dentalplus_frontend.ui.theme.Blue40
+import com.example.dentalplus_frontend.model.OdontogramType
+import com.example.dentalplus_frontend.model.Quadrant
 import com.example.dentalplus_frontend.ui.theme.Blue80
 import com.example.dentalplus_frontend.ui.theme.BlueGrey40
-
-// ---------------- ENUMS ----------------
-
-enum class OdontogramType {
-    CHILD, ADULT, BOTH
-}
-
-enum class Quadrant {
-    TOP_RIGHT, TOP_LEFT, BOTTOM_RIGHT, BOTTOM_LEFT
-}
+import com.example.dentalplus_frontend.model.ToothPart
+import com.example.dentalplus_frontend.model.ToothState
+import com.example.dentalplus_frontend.model.getDisplayName
+import com.example.dentalplus_frontend.ui.ColorPickerDialog
 
 // ---------------- DATOS ----------------
 
@@ -101,14 +112,13 @@ fun OdontogramScreen(
         Spacer(modifier = Modifier.height(30.dp))
         Row (modifier = Modifier
             .fillMaxWidth()
-            .padding(end = 20.dp, start = 10.dp), Arrangement.SpaceBetween, Alignment.CenterVertically){
+            .padding(end = 20.dp, start = 10.dp), Arrangement.spacedBy(3.dp), Alignment.CenterVertically){
             IconButton(onClick = { navController.popBackStack() },
                 content = { Icon(Icons.Sharp.ArrowBack, contentDescription = null,
                     modifier = Modifier.size(30.dp)) })
-            Text(text = "Escull una dent", modifier = Modifier.padding(start = 9.dp),
-                style = MaterialTheme.typography.displaySmall)
+            Text(text = "Selecciona una dent", modifier = Modifier.padding(start = 9.dp),
+                style = MaterialTheme.typography.headlineMedium)
         }
-        Divider(Modifier.padding(vertical = 10.dp, horizontal = 10.dp))
         // ODONTOGRAMA
         Box(
             modifier = Modifier
@@ -143,7 +153,6 @@ fun OdontogramScreen(
                     .background(BlueGrey40)
             )
         }
-        Divider(Modifier.padding(vertical = 10.dp, horizontal = 10.dp))
         Image(
             painter = painterResource(R.drawable.generic_footer_wave),
             contentDescription = null,
@@ -325,7 +334,7 @@ fun QuadrantZoomedScreen(
 
         Row (modifier = Modifier
             .fillMaxWidth()
-            .padding(end = 20.dp, start = 10.dp), Arrangement.SpaceBetween, Alignment.CenterVertically){
+            .padding(end = 20.dp, start = 10.dp), Arrangement.spacedBy(3.dp), Alignment.CenterVertically){
             IconButton(onClick = { navController.popBackStack() },
                 content = { Icon(Icons.Sharp.ArrowBack, contentDescription = null,
                     modifier = Modifier.size(30.dp)) })
@@ -335,8 +344,6 @@ fun QuadrantZoomedScreen(
                 style = MaterialTheme.typography.headlineMedium
             )
         }
-
-        Divider(Modifier.padding(vertical = 10.dp, horizontal = 10.dp))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -393,7 +400,6 @@ fun QuadrantZoomedScreen(
                 }
             }
         }
-        Divider(Modifier.padding(vertical = 10.dp, horizontal = 10.dp))
         Image(
             painter = painterResource(R.drawable.generic_footer_wave),
             contentDescription = null,
@@ -432,6 +438,8 @@ fun ClickableTooth(
     }
 }
 
+
+
 @Composable
 fun RearTooth(toothSize: Dp) {
     Canvas(modifier = Modifier
@@ -465,5 +473,375 @@ fun FrontalTooth(toothSize: Dp) {
         drawLine(Color(0xFF000000), Offset(w, 0f), Offset(w*0.75f, h*0.25f), 3f)
         drawLine(Color(0xFF000000), Offset(0f, h), Offset(w*0.9f, h*.1f), 3f)
         drawLine(Color(0xFF000000), Offset(0f, 0f), Offset(w*1f, h*1f), 3f)
+    }
+}
+
+// ---------------- DETALLE DIENTE ----------------
+@Composable
+fun ToothDetailScreen(
+    navController: NavController,
+    toothNumber: Int
+) {
+    var selectedPart by remember { mutableStateOf<ToothPart?>(null) }
+    val state = remember { ToothState() }
+
+    val isFrontal = toothNumber % 10 <= 3
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(R.drawable.generic_header_wave),
+            contentDescription = null,
+            modifier = Modifier.fillMaxWidth(),
+            contentScale = ContentScale.Crop
+        )
+        Spacer(Modifier.height(10.dp))
+
+        Row (modifier = Modifier
+            .fillMaxWidth()
+            .padding(end = 20.dp, start = 10.dp), Arrangement.spacedBy(3.dp), Alignment.CenterVertically){
+            IconButton(onClick = { navController.popBackStack() },
+                content = { Icon(Icons.Sharp.ArrowBack, contentDescription = null,
+                    modifier = Modifier.size(30.dp)) })
+            Text(
+                text = "Detalls de la dent",
+                modifier = Modifier.padding(start = 9.dp),
+                style = MaterialTheme.typography.headlineMedium
+            )
+        }
+        Spacer(Modifier.height(35.dp))
+
+        if (isFrontal)
+        {
+            FrontalToothInteractive(150.dp, state) { selectedPart = it }
+        }
+        else
+        {
+            RearToothInteractive(150.dp, state) { selectedPart = it }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        Column (modifier = Modifier.fillMaxWidth()
+            .padding(horizontal = 30.dp, vertical = 30.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            Text("Nº de la dent: $toothNumber")
+            Text("Tipus: ${if (isFrontal) "Frontal" else "Del darrere"}")
+
+            Divider(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp))
+            Row(modifier = Modifier.fillMaxWidth().padding(end = 90.dp),
+                horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Mesial: -")
+                Text("Lingual: -")
+            }
+            Row(modifier = Modifier.fillMaxWidth().padding(end = 90.dp),
+                horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Distal: -")
+                Text("Oclusal: -")
+            }
+            if (!isFrontal){
+                Text("Central: -")
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        Button(onClick = {}, modifier = Modifier
+            .fillMaxWidth(0.7f)
+            .height(50.dp), shape = RoundedCornerShape(10.dp)) {
+            Text("Guardar")
+        }
+
+        Image(
+            painter = painterResource(R.drawable.generic_footer_wave),
+            contentDescription = null,
+            modifier = Modifier.fillMaxWidth(),
+            contentScale = ContentScale.Crop
+        )
+    }
+
+    if (selectedPart != null) {
+        ColorPickerDialog(
+            onColorSelected = { color ->
+                selectedPart?.let {
+                    if (color == Color.White){
+                        state.colors.remove(it)
+                    } else {
+                        state.colors[it] = color
+                    }
+                }
+            },
+            onDismiss = { selectedPart = null }
+        )
+    }
+}
+@Composable
+fun ColorPickerDialog(
+    onColorSelected: (Color) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val colors = listOf(
+        "Patología / Lesió" to Color(0xFFDC0000),
+        "Tractament ja fet" to Color(0xFF0000DC))
+    val colors2 = listOf(
+        "Càries radiogràfiques" to Color(0xFF00DC00),
+        "Segellat de foses y fisures" to Color(0xFFFFD600)
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {},
+        shape = RoundedCornerShape(15.dp),
+        title = { Text("Selecciona un color") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier, verticalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally) {
+                        colors.forEach { (label, color) ->
+                            TextButton(modifier = Modifier.height(60.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = color),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp),
+                                shape = RoundedCornerShape(5.dp), onClick = {
+                                    onColorSelected(color)
+                                    onDismiss()
+                                },
+                                content = {
+                                    Text(label, textAlign = TextAlign.Center, softWrap = true)
+                            })
+                        }
+                    }
+                    Column(modifier = Modifier, verticalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally) {
+                        colors2.forEach { (label, color) ->
+                            TextButton(modifier = Modifier.height(60.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = color),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp),
+                                shape = RoundedCornerShape(5.dp), onClick = {
+                                    onColorSelected(color)
+                                    onDismiss()
+                                },
+                                content = {
+                                    Text(label, textAlign = TextAlign.Center, softWrap = true)
+                                })
+                        }
+                    }
+                }
+                TextButton(modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp),
+                    shape = RoundedCornerShape(5.dp), onClick = {
+                        onColorSelected(Color.Black)
+                        onDismiss()
+                    },
+                    content = {
+                        Text("Absència natural", textAlign = TextAlign.Center, softWrap = true)
+                    })
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = {
+                        onColorSelected(Color.White)
+                        onDismiss()
+                    },) {
+                        Text("Esborrar")
+                        Icon(Icons.Outlined.Delete, contentDescription = null, Modifier.size(30.dp))
+                    }
+                }
+            }
+        }
+    )
+}
+@Composable
+fun RearToothInteractive(
+    toothSize: Dp,
+    state: ToothState,
+    onPartClick: (ToothPart) -> Unit
+) {
+    Canvas(
+        modifier = Modifier
+            .size(toothSize)
+            .border(2.dp, Color.Black)
+            .pointerInput(Unit) {
+                detectTapGestures { offset ->
+
+                    val w = toothSize.toPx()
+                    val h = toothSize.toPx()
+
+                    val left = w * 0.25f
+                    val right = w * 0.75f
+                    val top = h * 0.25f
+                    val bottom = h * 0.75f
+
+                    val part = when
+                    {
+                        offset.x in left..right && offset.y in top..bottom -> ToothPart.CENTER
+
+                        offset.y < top && offset.x in left..right -> ToothPart.OCCLUSAL
+                        offset.y > bottom && offset.x in left..right -> ToothPart.LINGUAL
+
+                        offset.x < left && offset.y in top..bottom -> ToothPart.MESIAL
+                        offset.x > right && offset.y in top..bottom -> ToothPart.DISTAL
+
+                        else -> null
+                    }
+
+                    part?.let { onPartClick(it) }
+                }
+            }
+    ) {
+
+        val w = size.width
+        val h = size.height
+
+        val left = w * 0.25f
+        val right = w * 0.75f
+        val top = h * 0.25f
+        val bottom = h * 0.75f
+
+        // PATHS CORRECTOS (trapecios)
+
+        val topPath = Path().apply {
+            moveTo(0f, 0f)
+            lineTo(w, 0f)
+            lineTo(right, top)
+            lineTo(left, top)
+            close()
+        }
+
+        val bottomPath = Path().apply {
+            moveTo(0f, h)
+            lineTo(w, h)
+            lineTo(right, bottom)
+            lineTo(left, bottom)
+            close()
+        }
+
+        val leftPath = Path().apply {
+            moveTo(0f, 0f)
+            lineTo(left, top)
+            lineTo(left, bottom)
+            lineTo(0f, h)
+            close()
+        }
+
+        val rightPath = Path().apply {
+            moveTo(w, 0f)
+            lineTo(right, top)
+            lineTo(right, bottom)
+            lineTo(w, h)
+            close()
+        }
+
+        val centerRect = Rect(left, top, right, bottom)
+
+        // PINTADO
+        state.colors[ToothPart.OCCLUSAL]?.let {
+            drawPath(topPath, it.copy(alpha = 1f))
+        }
+
+        state.colors[ToothPart.LINGUAL]?.let {
+            drawPath(bottomPath, it.copy(alpha = 1f))
+        }
+
+        state.colors[ToothPart.MESIAL]?.let {
+            drawPath(leftPath, it.copy(alpha = 1f))
+        }
+
+        state.colors[ToothPart.DISTAL]?.let {
+            drawPath(rightPath, it.copy(alpha = 1f))
+        }
+
+        state.colors[ToothPart.CENTER]?.let {
+            drawRect(it.copy(alpha = 1f),
+                topLeft = Offset(left, top),
+                size = Size(right - left, bottom - top))
+        }
+
+        // DIBUJO
+        drawRect(Color.Black, style = Stroke(3f))
+
+        drawLine(Color.Black, Offset(0f, 0f), Offset(left, top), 3f)
+        drawLine(Color.Black, Offset(w, 0f), Offset(right, top), 3f)
+        drawLine(Color.Black, Offset(0f, h), Offset(left, bottom), 3f)
+        drawLine(Color.Black, Offset(w, h), Offset(right, bottom), 3f)
+
+        drawRect(Color.Black,
+            Offset(left, top),
+            Size(right - left, bottom - top),
+            style = Stroke(3f)
+        )
+    }
+}
+@Composable
+fun FrontalToothInteractive(
+    toothSize: Dp,
+    state: ToothState,
+    onPartClick: (ToothPart) -> Unit
+) {
+    Canvas(
+        modifier = Modifier
+            .size(toothSize)
+            .border(2.dp, Color.Black)
+            .pointerInput(Unit) {
+                detectTapGestures { offset ->
+                    val w = toothSize.toPx()
+                    val h = toothSize.toPx()
+
+                    val part = when
+                    {
+                        offset.y < offset.x && offset.y < (h - offset.x) -> ToothPart.OCCLUSAL
+                        offset.y > offset.x && offset.y > (h - offset.x) -> ToothPart.LINGUAL
+                        offset.x < w / 2 -> ToothPart.MESIAL
+                        else -> ToothPart.DISTAL
+                    }
+
+                    onPartClick(part)
+                }
+            }
+    ) {
+
+        val w = size.width
+        val h = size.height
+        val center = Offset(w / 2, h / 2)
+
+        val top = Path().apply {
+            moveTo(0f, 0f)
+            lineTo(w, 0f)
+            lineTo(center.x, center.y)
+            close()
+        }
+
+        val bottom = Path().apply {
+            moveTo(0f, h)
+            lineTo(w, h)
+            lineTo(center.x, center.y)
+            close()
+        }
+
+        val left = Path().apply {
+            moveTo(0f, 0f)
+            lineTo(0f, h)
+            lineTo(center.x, center.y)
+            close()
+        }
+
+        val right = Path().apply {
+            moveTo(w, 0f)
+            lineTo(w, h)
+            lineTo(center.x, center.y)
+            close()
+        }
+
+        state.colors[ToothPart.OCCLUSAL]?.let { drawPath(top, it.copy(alpha = 1f)) }
+        state.colors[ToothPart.LINGUAL]?.let { drawPath(bottom, it.copy(alpha = 1f)) }
+        state.colors[ToothPart.MESIAL]?.let { drawPath(left, it.copy(alpha = 1f)) }
+        state.colors[ToothPart.DISTAL]?.let { drawPath(right, it.copy(alpha = 1f)) }
+
+        drawRect(Color.Black, style = Stroke(3f))
+        drawLine(Color.Black, Offset(0f, 0f), Offset(w, h), 3f)
+        drawLine(Color.Black, Offset(w, 0f), Offset(0f, h), 3f)
     }
 }
