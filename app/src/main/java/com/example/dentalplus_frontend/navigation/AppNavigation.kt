@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
 import com.example.dentalplus_frontend.R
@@ -24,11 +25,13 @@ import com.example.dentalplus_frontend.ui.*
 import com.example.dentalplus_frontend.ui.AgendaScreen
 import com.example.dentalplus_frontend.ui.theme.Blue40
 import com.example.dentalplus_frontend.utils.Constants
+import com.example.dentalplus_frontend.viewmodel.OdontogramViewModel
 
 @Composable
 fun AppNavigation() {
 
     val navController = rememberNavController()
+    val viewModel: OdontogramViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -71,7 +74,7 @@ fun AppNavigation() {
                 backStackEntry.arguments?.getString("type")!!
             )
 
-            OdontogramScreen(navController, type)
+            OdontogramScreen(navController, type, viewModel)
         }
 
         composable("quadrant/{quadrant}/{type}") { backStackEntry ->
@@ -84,14 +87,15 @@ fun AppNavigation() {
                 backStackEntry.arguments?.getString("type")!!
             )
 
-            QuadrantZoomedScreen(navController, quadrant, type)
+            QuadrantZoomedScreen(navController, quadrant, type, viewModel)
         }
         composable("tooth/{toothNumber}") { backStackEntry ->
             val toothNumber = backStackEntry.arguments?.getString("toothNumber")?.toInt() ?: 0
 
             ToothDetailScreen(
                 navController = navController,
-                toothNumber = toothNumber
+                toothNumber = toothNumber,
+                viewModel
             )
         }
     }
