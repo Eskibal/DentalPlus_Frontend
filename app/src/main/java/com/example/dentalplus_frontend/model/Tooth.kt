@@ -1,5 +1,6 @@
 package com.example.dentalplus_frontend.model
 
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateMap
@@ -26,6 +27,7 @@ enum class Quadrant {
     TOP_RIGHT, TOP_LEFT, BOTTOM_RIGHT, BOTTOM_LEFT
 }
 
+@Stable
 data class ToothState(
     val colors: SnapshotStateMap<ToothPart, Color> = mutableStateMapOf()
 )

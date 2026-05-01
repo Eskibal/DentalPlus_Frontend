@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,6 +49,7 @@ import com.example.dentalplus_frontend.model.ToothPart
 import com.example.dentalplus_frontend.model.ToothState
 import com.example.dentalplus_frontend.model.getDisplayName
 import com.example.dentalplus_frontend.ui.ColorPickerDialog
+import com.example.dentalplus_frontend.viewmodel.OdontogramViewModel
 
 // ---------------- DATOS ----------------
 
@@ -72,7 +74,7 @@ fun getTeethNumber(type: OdontogramType, quadrant: Quadrant): List<Int> {
         OdontogramType.BOTH -> emptyList()
     }
 }
-@Composable
+/*@Composable
 fun getTeeth(type: OdontogramType, quadrant: Quadrant, toothSize: Dp): List<Unit> {
     return when (type) {
 
@@ -93,14 +95,15 @@ fun getTeeth(type: OdontogramType, quadrant: Quadrant, toothSize: Dp): List<Unit
 
         OdontogramType.BOTH -> emptyList()
     }
-}
+}*/
 
 // ---------------- SCREEN PRINCIPAL ----------------
 
 @Composable
 fun OdontogramScreen(
     navController: NavController,
-    type: OdontogramType
+    type: OdontogramType,
+    viewModel: OdontogramViewModel
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -128,13 +131,13 @@ fun OdontogramScreen(
         ) {
             Column {
                 Row {
-                    QuadrantView(navController, type, Quadrant.TOP_RIGHT, Modifier.weight(1f))
-                    QuadrantView(navController, type, Quadrant.TOP_LEFT, Modifier.weight(1f))
+                    QuadrantView(navController, type, Quadrant.TOP_RIGHT, Modifier.weight(1f), viewModel)
+                    QuadrantView(navController, type, Quadrant.TOP_LEFT, Modifier.weight(1f), viewModel)
                 }
 
                 Row {
-                    QuadrantView(navController, type, Quadrant.BOTTOM_RIGHT, Modifier.weight(1f))
-                    QuadrantView(navController, type, Quadrant.BOTTOM_LEFT, Modifier.weight(1f))
+                    QuadrantView(navController, type, Quadrant.BOTTOM_RIGHT, Modifier.weight(1f), viewModel)
+                    QuadrantView(navController, type, Quadrant.BOTTOM_LEFT, Modifier.weight(1f), viewModel)
                 }
             }
 
@@ -170,7 +173,8 @@ fun QuadrantView(
     navController: NavController,
     type: OdontogramType,
     quadrant: Quadrant,
-    modifier: Modifier
+    modifier: Modifier,
+    viewModel: OdontogramViewModel
 ) {
 
     val adultSize = 20.dp
@@ -178,6 +182,7 @@ fun QuadrantView(
 
     val adultSpacing = 4.dp
     val childSpacing = 3.dp
+
 
     if (type == OdontogramType.BOTH) {
 
@@ -189,8 +194,10 @@ fun QuadrantView(
                 },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
+            // ---------------- TOP (adult arriba, child abajo) ----------------
             if (quadrant == Quadrant.TOP_RIGHT || quadrant == Quadrant.TOP_LEFT) {
+
+                // NÚMEROS ADULTOS
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
@@ -202,24 +209,53 @@ fun QuadrantView(
                     }
                 }
 
+                // DIENTES ADULTOS
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(adultSpacing)) {
-                        getTeeth(OdontogramType.ADULT, quadrant, adultSize)
+
+                        val teeth = getTeethNumber(OdontogramType.ADULT, quadrant)
+
+                        teeth.forEach { tooth ->
+                            val state = viewModel.getToothState(tooth)
+                            val isFrontal = tooth % 10 <= 3
+
+                            if (isFrontal) {
+                                FrontalToothInteractive(adultSize, state) {}
+                            } else {
+                                RearToothInteractive(adultSize, state) {}
+                            }
+                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
+
+                // DIENTES NIÑO
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(childSpacing)) {
-                        getTeeth(OdontogramType.CHILD, quadrant, childSize)
+
+                        val teeth = getTeethNumber(OdontogramType.CHILD, quadrant)
+
+                        teeth.forEach { tooth ->
+                            val state = viewModel.getToothState(tooth)
+                            val isFrontal = tooth % 10 <= 3
+
+                            if (isFrontal) {
+                                FrontalToothInteractive(childSize, state) {}
+                            } else {
+                                RearToothInteractive(childSize, state) {}
+                            }
+                        }
                     }
                 }
+
+                // NÚMEROS NIÑO
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
@@ -230,7 +266,12 @@ fun QuadrantView(
                         }
                     }
                 }
+
             } else {
+
+                // ---------------- BOTTOM (child arriba, adult abajo) ----------------
+
+                // NÚMEROS NIÑO
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
@@ -242,23 +283,53 @@ fun QuadrantView(
                     }
                 }
 
+                // DIENTES NIÑO
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(childSpacing)) {
-                        getTeeth(OdontogramType.CHILD, quadrant, childSize)
+
+                        val teeth = getTeethNumber(OdontogramType.CHILD, quadrant)
+
+                        teeth.forEach { tooth ->
+                            val state = viewModel.getToothState(tooth)
+                            val isFrontal = tooth % 10 <= 3
+
+                            if (isFrontal) {
+                                FrontalToothInteractive(childSize, state) {}
+                            } else {
+                                RearToothInteractive(childSize, state) {}
+                            }
+                        }
                     }
                 }
+
                 Spacer(modifier = Modifier.height(6.dp))
+
+                // DIENTES ADULTOS
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(adultSpacing)) {
-                        getTeeth(OdontogramType.ADULT, quadrant, adultSize)
+
+                        val teeth = getTeethNumber(OdontogramType.ADULT, quadrant)
+
+                        teeth.forEach { tooth ->
+                            val state = viewModel.getToothState(tooth)
+                            val isFrontal = tooth % 10 <= 3
+
+                            if (isFrontal) {
+                                FrontalToothInteractive(adultSize, state) {}
+                            } else {
+                                RearToothInteractive(adultSize, state) {}
+                            }
+                        }
                     }
                 }
+
+                // NÚMEROS ADULTOS
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
@@ -272,32 +343,45 @@ fun QuadrantView(
             }
         }
     }
+    // ---------------- SOLO CHILD o ADULT ----------------
     else {
-        Column(modifier = modifier
-            .padding(bottom = 10.dp)
-            .clickable {
-                navController.navigate("quadrant/${quadrant.name}/${type.name}")
-            }, Arrangement.SpaceBetween, horizontalAlignment = Alignment.CenterHorizontally) {
-            if (type == OdontogramType.CHILD)
-            {
-                Row(horizontalArrangement = Arrangement.spacedBy(15.dp)) {
-                    getTeethNumber(type, quadrant).forEach {
-                        Text(it.toString(), fontSize = 15.sp, color = Blue80)
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    getTeeth(type, quadrant, 30.dp)
+        Column(
+            modifier = modifier
+                .padding(bottom = 10.dp)
+                .clickable {
+                    navController.navigate("quadrant/${quadrant.name}/${type.name}")
+                },
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            val teeth = getTeethNumber(type, quadrant)
+
+            val size = if (type == OdontogramType.CHILD) 30.dp else 20.dp
+
+            val numberSize = if (type == OdontogramType.CHILD) 15.sp else 10.sp
+
+            val spacing = if (type == OdontogramType.CHILD) 15.dp else 12.dp
+
+            // NÚMEROS
+            Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                teeth.forEach {
+                    Text(it.toString(), fontSize = numberSize, color = Blue80)
                 }
             }
-            else
-            {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    getTeethNumber(type, quadrant).forEach {
-                        Text(it.toString(), fontSize = 10.sp, color = Blue80)
+
+            // DIENTES
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+
+                teeth.forEach { tooth ->
+                    val state = viewModel.getToothState(tooth)
+                    val isFrontal = tooth % 10 <= 3
+
+                    if (isFrontal) {
+                        FrontalToothInteractive(size, state) {}
+                    } else {
+                        RearToothInteractive(size, state) {}
                     }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    getTeeth(type, quadrant, 20.dp)
                 }
             }
         }
@@ -318,7 +402,8 @@ fun Quadrant.getDisplayName(): String {
 fun QuadrantZoomedScreen(
     navController: NavController,
     quadrant: Quadrant,
-    type: OdontogramType
+    type: OdontogramType,
+    viewModel: OdontogramViewModel
 ) {
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -360,7 +445,8 @@ fun QuadrantZoomedScreen(
                             ClickableTooth(
                                 toothNumber = tooth,
                                 navController = navController,
-                                toothSize = 35.dp
+                                toothSize = 35.dp,
+                                viewModel = viewModel
                             )
                         }
                     }
@@ -371,7 +457,8 @@ fun QuadrantZoomedScreen(
                             ClickableTooth(
                                 toothNumber = tooth,
                                 navController = navController,
-                                toothSize = 35.dp
+                                toothSize = 35.dp,
+                                viewModel = viewModel
                             )
                         }
                     }
@@ -388,12 +475,12 @@ fun QuadrantZoomedScreen(
                         if (type == OdontogramType.CHILD) {
                             teeth.forEach { tooth ->
                                 ClickableTooth(toothNumber = tooth, navController = navController,
-                                    toothSize = 50.dp)
+                                    toothSize = 50.dp, viewModel = viewModel)
                             }
                         } else {
                             teeth.forEach { tooth ->
                                 ClickableTooth(toothNumber = tooth, navController = navController,
-                                    toothSize = 35.dp)
+                                    toothSize = 35.dp, viewModel = viewModel)
                             }
                         }
                     }
@@ -413,7 +500,8 @@ fun QuadrantZoomedScreen(
 fun ClickableTooth(
     toothNumber: Int,
     navController: NavController,
-    toothSize: Dp
+    toothSize: Dp,
+    viewModel: OdontogramViewModel
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -430,60 +518,45 @@ fun ClickableTooth(
 
         val isFrontal = toothNumber % 10 <= 3
 
+        val state = viewModel.getToothState(toothNumber)
+
         if (isFrontal) {
-            FrontalTooth(toothSize)
+            FrontalToothInteractive(
+                toothSize = toothSize,
+                state = state,
+                onPartClick = {
+                    navController.navigate("tooth/$toothNumber")
+                }
+            )
         } else {
-            RearTooth(toothSize)
+            RearToothInteractive(
+                toothSize = toothSize,
+                state = state,
+                onPartClick = {
+                    navController.navigate("tooth/$toothNumber")
+                }
+            )
         }
     }
 }
-
-
-
-@Composable
-fun RearTooth(toothSize: Dp) {
-    Canvas(modifier = Modifier
-        .size(toothSize)
-        .border(2.dp, Color(0xFF000000))
-    ) {
-
-        val w = size.width
-        val h = size.height
-
-        drawRect(color = Color(0xFF000000), topLeft = Offset(w * 0.25f, h * 0.25f), size = Size(w * 0.5f, h * 0.5f), style = Stroke(width = 3f))
-
-        drawLine(Color(0xFF000000), Offset(0f, 0f), Offset(w * 0.25f, h * 0.25f), 3f)
-        drawLine(Color(0xFF000000), Offset(w, 0f), Offset(w * 0.75f, h * 0.25f), 3f)
-        drawLine(Color(0xFF000000), Offset(0f, h), Offset(w * 0.25f, h * 0.75f), 3f)
-        drawLine(Color(0xFF000000), Offset(w, h), Offset(w * 0.75f, h * 0.75f), 3f)
-    }
-}
-
-@Composable
-fun FrontalTooth(toothSize: Dp) {
-    Canvas(
-        modifier = Modifier
-            .size(toothSize)
-            .border(2.dp, Color(0xFF000000))
-    ) {
-
-        val w = size.width
-        val h = size.height
-
-        drawLine(Color(0xFF000000), Offset(w, 0f), Offset(w*0.75f, h*0.25f), 3f)
-        drawLine(Color(0xFF000000), Offset(0f, h), Offset(w*0.9f, h*.1f), 3f)
-        drawLine(Color(0xFF000000), Offset(0f, 0f), Offset(w*1f, h*1f), 3f)
-    }
-}
-
 // ---------------- DETALLE DIENTE ----------------
 @Composable
 fun ToothDetailScreen(
     navController: NavController,
-    toothNumber: Int
+    toothNumber: Int,
+    viewModel: OdontogramViewModel
 ) {
     var selectedPart by remember { mutableStateOf<ToothPart?>(null) }
-    val state = remember { ToothState() }
+    val originalState = viewModel.getToothState(toothNumber)
+
+    val editableColors = remember {
+        mutableStateMapOf<ToothPart, Color>().apply {
+            putAll(originalState.colors)
+        }
+    }
+
+    val localState = ToothState(editableColors)
+    val hasChanges = editableColors != originalState.colors
 
     val isFrontal = toothNumber % 10 <= 3
 
@@ -503,9 +576,6 @@ fun ToothDetailScreen(
         Row (modifier = Modifier
             .fillMaxWidth()
             .padding(end = 20.dp, start = 10.dp), Arrangement.spacedBy(3.dp), Alignment.CenterVertically){
-            IconButton(onClick = { navController.popBackStack() },
-                content = { Icon(Icons.Sharp.ArrowBack, contentDescription = null,
-                    modifier = Modifier.size(30.dp)) })
             Text(
                 text = "Detalls de la dent",
                 modifier = Modifier.padding(start = 9.dp),
@@ -516,11 +586,11 @@ fun ToothDetailScreen(
 
         if (isFrontal)
         {
-            FrontalToothInteractive(150.dp, state) { selectedPart = it }
+            FrontalToothInteractive(150.dp, localState) { selectedPart = it }
         }
         else
         {
-            RearToothInteractive(150.dp, state) { selectedPart = it }
+            RearToothInteractive(150.dp, localState) { selectedPart = it }
         }
 
         Spacer(Modifier.height(20.dp))
@@ -549,12 +619,30 @@ fun ToothDetailScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        Button(onClick = {}, modifier = Modifier
-            .fillMaxWidth(0.7f)
-            .height(50.dp), shape = RoundedCornerShape(10.dp)) {
+        Button(
+            onClick = {
+                viewModel.updateToothState(toothNumber, editableColors)
+                navController.popBackStack()
+            },
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .height(50.dp),
+            shape = RoundedCornerShape(10.dp),
+            enabled = hasChanges
+        ) {
             Text("Guardar")
         }
-
+        Spacer(Modifier.height(10.dp))
+        Button(
+            onClick = { navController.popBackStack() },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .height(50.dp),
+            shape = RoundedCornerShape(10.dp),
+        ) {
+            Text("Cancelar")
+        }
         Image(
             painter = painterResource(R.drawable.generic_footer_wave),
             contentDescription = null,
@@ -568,9 +656,9 @@ fun ToothDetailScreen(
             onColorSelected = { color ->
                 selectedPart?.let {
                     if (color == Color.White){
-                        state.colors.remove(it)
+                        editableColors.remove(it)
                     } else {
-                        state.colors[it] = color
+                        editableColors[it] = color
                     }
                 }
             },
@@ -654,6 +742,8 @@ fun ColorPickerDialog(
         }
     )
 }
+
+// ---------------- DIENTES ----------------
 @Composable
 fun RearToothInteractive(
     toothSize: Dp,
@@ -664,11 +754,11 @@ fun RearToothInteractive(
         modifier = Modifier
             .size(toothSize)
             .border(2.dp, Color.Black)
-            .pointerInput(Unit) {
+            .pointerInput(toothSize) {
                 detectTapGestures { offset ->
 
-                    val w = toothSize.toPx()
-                    val h = toothSize.toPx()
+                    val w = size.width
+                    val h = size.height
 
                     val left = w * 0.25f
                     val right = w * 0.75f
@@ -785,10 +875,10 @@ fun FrontalToothInteractive(
         modifier = Modifier
             .size(toothSize)
             .border(2.dp, Color.Black)
-            .pointerInput(Unit) {
+            .pointerInput(toothSize) {
                 detectTapGestures { offset ->
-                    val w = toothSize.toPx()
-                    val h = toothSize.toPx()
+                    val w = size.width
+                    val h = size.height
 
                     val part = when
                     {
@@ -843,5 +933,41 @@ fun FrontalToothInteractive(
         drawRect(Color.Black, style = Stroke(3f))
         drawLine(Color.Black, Offset(0f, 0f), Offset(w, h), 3f)
         drawLine(Color.Black, Offset(w, 0f), Offset(0f, h), 3f)
+    }
+}
+
+@Composable
+fun RearTooth(toothSize: Dp) {
+    Canvas(modifier = Modifier
+        .size(toothSize)
+        .border(2.dp, Color(0xFF000000))
+    ) {
+
+        val w = size.width
+        val h = size.height
+
+        drawRect(color = Color(0xFF000000), topLeft = Offset(w * 0.25f, h * 0.25f), size = Size(w * 0.5f, h * 0.5f), style = Stroke(width = 3f))
+
+        drawLine(Color(0xFF000000), Offset(0f, 0f), Offset(w * 0.25f, h * 0.25f), 3f)
+        drawLine(Color(0xFF000000), Offset(w, 0f), Offset(w * 0.75f, h * 0.25f), 3f)
+        drawLine(Color(0xFF000000), Offset(0f, h), Offset(w * 0.25f, h * 0.75f), 3f)
+        drawLine(Color(0xFF000000), Offset(w, h), Offset(w * 0.75f, h * 0.75f), 3f)
+    }
+}
+
+@Composable
+fun FrontalTooth(toothSize: Dp) {
+    Canvas(
+        modifier = Modifier
+            .size(toothSize)
+            .border(2.dp, Color(0xFF000000))
+    ) {
+
+        val w = size.width
+        val h = size.height
+
+        drawLine(Color(0xFF000000), Offset(w, 0f), Offset(w*0.75f, h*0.25f), 3f)
+        drawLine(Color(0xFF000000), Offset(0f, h), Offset(w*0.9f, h*.1f), 3f)
+        drawLine(Color(0xFF000000), Offset(0f, 0f), Offset(w*1f, h*1f), 3f)
     }
 }
