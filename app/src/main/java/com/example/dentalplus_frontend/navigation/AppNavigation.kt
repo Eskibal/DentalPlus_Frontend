@@ -46,7 +46,6 @@ import com.example.dentalplus_frontend.viewmodel.OdontogramViewModel
 
 @Composable
 fun AppNavigation() {
-
     val navController = rememberNavController()
     val odontogramViewModel: OdontogramViewModel = viewModel()
     val loginViewModel: LoginViewModel = viewModel()
@@ -65,7 +64,6 @@ fun AppNavigation() {
         navController = navController,
         startDestination = startDestination
     ) {
-
         composable(Routes.LOGIN) {
             LoginScreen(
                 modifier = Modifier,
@@ -91,31 +89,52 @@ fun AppNavigation() {
         }
 
         composable(Routes.PATIENTS) {
-            PatientListScreen(navController)
+            PatientListScreen(navController = navController)
         }
 
-        composable(Routes.PATIENT_DETAIL) {
-            PatientScreen(navController)
+        composable("${Routes.PATIENT_DETAIL}/{patientId}") { backStackEntry ->
+            val patientId = backStackEntry.arguments
+                ?.getString("patientId")
+                ?.toLongOrNull()
+                ?: -1L
+
+            PatientScreen(
+                navController = navController,
+                patientId = patientId
+            )
         }
 
         composable(Routes.AGENDA) {
-            AgendaScreen(navController)
+            AgendaScreen(navController = navController)
         }
 
         composable(Routes.PROFILE) {
-            ProfileScreen(navController)
+            ProfileScreen(navController = navController)
         }
 
-        composable("odontogram/{type}") { backStackEntry ->
+        composable("odontogram/{patientId}/{type}") { backStackEntry ->
+            val patientId = backStackEntry.arguments
+                ?.getString("patientId")
+                ?.toLongOrNull()
+                ?: -1L
 
             val type = OdontogramType.valueOf(
                 backStackEntry.arguments?.getString("type")!!
             )
 
-            OdontogramScreen(navController, type, odontogramViewModel)
+            OdontogramScreen(
+                navController = navController,
+                patientId = patientId,
+                type = type,
+                viewModel = odontogramViewModel
+            )
         }
 
-        composable("quadrant/{quadrant}/{type}") { backStackEntry ->
+        composable("quadrant/{patientId}/{quadrant}/{type}") { backStackEntry ->
+            val patientId = backStackEntry.arguments
+                ?.getString("patientId")
+                ?.toLongOrNull()
+                ?: -1L
 
             val quadrant = Quadrant.valueOf(
                 backStackEntry.arguments?.getString("quadrant")!!
@@ -125,16 +144,31 @@ fun AppNavigation() {
                 backStackEntry.arguments?.getString("type")!!
             )
 
-            QuadrantZoomedScreen(navController, quadrant, type, odontogramViewModel)
+            QuadrantZoomedScreen(
+                navController = navController,
+                patientId = patientId,
+                quadrant = quadrant,
+                type = type,
+                viewModel = odontogramViewModel
+            )
         }
 
-        composable("tooth/{toothNumber}") { backStackEntry ->
-            val toothNumber = backStackEntry.arguments?.getString("toothNumber")?.toInt() ?: 0
+        composable("tooth/{patientId}/{toothNumber}") { backStackEntry ->
+            val patientId = backStackEntry.arguments
+                ?.getString("patientId")
+                ?.toLongOrNull()
+                ?: -1L
+
+            val toothNumber = backStackEntry.arguments
+                ?.getString("toothNumber")
+                ?.toIntOrNull()
+                ?: 0
 
             ToothDetailScreen(
                 navController = navController,
+                patientId = patientId,
                 toothNumber = toothNumber,
-                odontogramViewModel
+                viewModel = odontogramViewModel
             )
         }
     }
@@ -175,7 +209,6 @@ fun BottomBar(navController: NavController) {
             )
 
             NavigationBar(containerColor = Color.Transparent) {
-
                 val currentRoute =
                     navController.currentBackStackEntryAsState().value?.destination?.route
 

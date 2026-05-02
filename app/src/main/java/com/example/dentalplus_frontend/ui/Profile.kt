@@ -1,9 +1,17 @@
 package com.example.dentalplus_frontend.ui
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,65 +19,150 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.dentalplus_frontend.R
 import com.example.dentalplus_frontend.navigation.BottomBar
 import com.example.dentalplus_frontend.navigation.Header
-
+import com.example.dentalplus_frontend.viewmodel.ProfileUiState
+import com.example.dentalplus_frontend.viewmodel.ProfileViewModel
 
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(
+    navController: NavController,
+    profileViewModel: ProfileViewModel = viewModel()
+) {
+    val context = LocalContext.current
+    val uiState by profileViewModel.uiState.collectAsState()
 
-    var expanded by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        profileViewModel.loadProfile(context)
+    }
 
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-
         Header()
 
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-        ) {
+        when {
+            uiState.isLoading -> {
+                ProfileLoadingContent(
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            uiState.errorMessage != null -> {
+                ProfileErrorContent(
+                    message = uiState.errorMessage ?: "S'ha produït un error",
+                    onRetry = { profileViewModel.loadProfile(context) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
-            DoctorHeaderCard()
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            ExpandableInfoBlock(
-                expanded = expanded,
-                onToggle = { expanded = !expanded }
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            ContactInfoBlock()
-
-            Spacer(modifier = Modifier.height(30.dp))
+            else -> {
+                ProfileContent(
+                    uiState = uiState,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
 
         BottomBar(navController)
     }
 }
 
+@Composable
+fun ProfileContent(
+    uiState: ProfileUiState,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(true) }
+
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState())
+    ) {
+        Spacer(modifier = Modifier.height(20.dp))
+
+        DoctorHeaderCard(uiState = uiState)
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        ExpandableInfoBlock(
+            uiState = uiState,
+            expanded = expanded,
+            onToggle = { expanded = !expanded }
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        ContactInfoBlock(uiState = uiState)
+
+        Spacer(modifier = Modifier.height(30.dp))
+    }
+}
 
 @Composable
-fun DoctorHeaderCard() {
+fun ProfileLoadingContent(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator()
+    }
+}
 
+@Composable
+fun ProfileErrorContent(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 30.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = message,
+            color = MaterialTheme.colorScheme.error
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = onRetry) {
+            Text("Tornar-ho a provar")
+        }
+    }
+}
+
+@Composable
+fun DoctorHeaderCard(uiState: ProfileUiState) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -78,12 +171,10 @@ fun DoctorHeaderCard() {
         shadowElevation = 8.dp,
         color = Color(0xFFEAEAEA)
     ) {
-
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Image(
                 painter = painterResource(R.drawable.ic_launcher_foreground),
                 contentDescription = null,
@@ -96,20 +187,19 @@ fun DoctorHeaderCard() {
             Spacer(modifier = Modifier.width(16.dp))
 
             Column {
-
                 Text(
-                    "Julio Martínez",
+                    text = uiState.fullName,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
 
                 Text(
-                    "Especialitat: Odontòleg",
+                    text = "Rol: ${uiState.roleText}",
                     color = Color.Gray
                 )
 
                 Text(
-                    "Día laboral: Dimarts",
+                    text = "Clínica: ${uiState.clinicName}",
                     color = Color.Gray
                 )
             }
@@ -117,26 +207,22 @@ fun DoctorHeaderCard() {
     }
 }
 
-
 @Composable
 fun ExpandableInfoBlock(
+    uiState: ProfileUiState,
     expanded: Boolean,
     onToggle: () -> Unit
 ) {
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 30.dp)
     ) {
-
         Surface(
             shape = RoundedCornerShape(16.dp),
             shadowElevation = 6.dp
         ) {
-
             Column {
-
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -145,39 +231,43 @@ fun ExpandableInfoBlock(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     Text(
-                        "Dades",
+                        text = "Dades personals",
                         fontWeight = FontWeight.Bold
                     )
 
                     Icon(
-                        if (expanded)
+                        imageVector = if (expanded) {
                             Icons.Outlined.KeyboardArrowUp
-                        else
-                            Icons.Outlined.KeyboardArrowDown,
+                        } else {
+                            Icons.Outlined.KeyboardArrowDown
+                        },
                         contentDescription = null
                     )
                 }
 
                 if (expanded) {
+                    HorizontalDivider(color = Color.Gray.copy(.3f))
 
-                    Divider(color = Color.Gray.copy(.3f))
+                    InfoRow(
+                        label = "Edat",
+                        value = uiState.ageText
+                    )
 
-                    InfoRow("Edat")
-                    Divider(color = Color.Gray.copy(.3f))
+                    HorizontalDivider(color = Color.Gray.copy(.3f))
 
-                    InfoRow("Gènere")
+                    InfoRow(
+                        label = "Gènere",
+                        value = uiState.genderText
+                    )
                 }
             }
         }
     }
 }
 
-
 @Composable
-fun ContactInfoBlock() {
-
+fun ContactInfoBlock(uiState: ProfileUiState) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -185,77 +275,82 @@ fun ContactInfoBlock() {
         shape = RoundedCornerShape(16.dp),
         shadowElevation = 6.dp
     ) {
-
         Column {
+            ContactRow(
+                label = "E-mail",
+                value = uiState.emailText
+            )
 
-            ContactRow("E-mail")
-            Divider(color = Color.Gray.copy(.3f))
+            HorizontalDivider(color = Color.Gray.copy(.3f))
 
-            ContactRow("Nº de telèfon")
-            Divider(color = Color.Gray.copy(.3f))
+            ContactRow(
+                label = "Núm. de telèfon",
+                value = uiState.phoneText
+            )
 
-            ContactRow("Ciutat")
-            Divider(color = Color.Gray.copy(.3f))
+            HorizontalDivider(color = Color.Gray.copy(.3f))
 
-            ContactRow("Direcció")
+            ContactRow(
+                label = "Ciutat",
+                value = uiState.cityText
+            )
+
+            HorizontalDivider(color = Color.Gray.copy(.3f))
+
+            ContactRow(
+                label = "Direcció",
+                value = uiState.addressText
+            )
         }
     }
 }
 
-
 @Composable
-fun InfoRow(label: String) {
-
+fun InfoRow(
+    label: String,
+    value: String
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         Text(
-            label,
+            text = label,
             modifier = Modifier.weight(1f),
             fontWeight = FontWeight.Bold
         )
 
-        Box(
-            modifier = Modifier
-                .weight(1.5f)
-                .height(20.dp)
-                .background(
-                    Color.Gray.copy(.3f),
-                    RoundedCornerShape(4.dp)
-                )
+        Text(
+            text = value,
+            modifier = Modifier.weight(1.5f),
+            color = Color.Gray
         )
     }
 }
 
-
 @Composable
-fun ContactRow(label: String) {
-
+fun ContactRow(
+    label: String,
+    value: String
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         Text(
-            label,
+            text = label,
             modifier = Modifier.weight(1f),
             fontWeight = FontWeight.Bold
         )
 
-        Box(
-            modifier = Modifier
-                .weight(1.5f)
-                .height(20.dp)
-                .background(
-                    Color.Gray.copy(.3f),
-                    RoundedCornerShape(4.dp)
-                )
+        Text(
+            text = value,
+            modifier = Modifier.weight(1.5f),
+            color = Color.Gray
         )
     }
 }

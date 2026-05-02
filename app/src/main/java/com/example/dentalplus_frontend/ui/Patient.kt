@@ -3,11 +3,18 @@ package com.example.dentalplus_frontend.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -17,94 +24,184 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Face
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.sharp.Face
-import androidx.compose.material.icons.twotone.Face
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.example.dentalplus_frontend.R
 import com.example.dentalplus_frontend.model.OdontogramType
 import com.example.dentalplus_frontend.navigation.BottomBar
 import com.example.dentalplus_frontend.navigation.Header
-import com.example.dentalplus_frontend.navigation.Routes
-import com.example.dentalplus_frontend.ui.theme.Blue40
-import com.example.dentalplus_frontend.ui.theme.Blue80
 import com.example.dentalplus_frontend.ui.theme.BlueGrey40
-import com.example.dentalplus_frontend.ui.theme.BlueGrey80
-import com.example.dentalplus_frontend.ui.theme.DentalPlus_FrontendTheme
-import com.example.dentalplus_frontend.utils.Constants
+import com.example.dentalplus_frontend.viewmodel.PatientDetailUiState
+import com.example.dentalplus_frontend.viewmodel.PatientDetailViewModel
 
 @Composable
-fun PatientScreen(navController: NavController) {
-    var showSelectionDialog by remember { mutableStateOf(false) }
+fun PatientScreen(
+    navController: NavController,
+    patientId: Long,
+    patientDetailViewModel: PatientDetailViewModel = viewModel()
+) {
+    val context = LocalContext.current
+    val uiState by patientDetailViewModel.uiState.collectAsState()
 
-    var selectedOdontogramType by remember { mutableStateOf<OdontogramType?>(null) }
+    LaunchedEffect(patientId) {
+        patientDetailViewModel.loadPatient(context, patientId)
+    }
 
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         Header()
-        Column(modifier = Modifier
-            .weight(1f)
-            .verticalScroll(rememberScrollState())) {
-            PatientHeaderCard()
-            Spacer(modifier = Modifier.height(20.dp))
-            InfoBlock(
-                items = listOf(
-                    "DNI/NIE" to "",
-                    "Nº de Telèfon" to "",
-                    "Domicili" to "",
-                    "E-mail" to "",
-                    "Població" to ""
+
+        when {
+            uiState.isLoading -> {
+                PatientLoadingContent(
+                    modifier = Modifier.weight(1f)
                 )
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            InfoBlock(
-                items = listOf(
-                    "Historial Clínic" to "",
-                    "Al·lèrgies" to "",
-                    "Observacions" to ""
+            }
+
+            uiState.errorMessage != null -> {
+                PatientErrorContent(
+                    message = uiState.errorMessage ?: "S'ha produït un error",
+                    onRetry = { patientDetailViewModel.loadPatient(context, patientId) },
+                    modifier = Modifier.weight(1f)
                 )
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            BigActionButton("Odontograma", onClick = { showSelectionDialog = true })
-            Spacer(modifier = Modifier.height(30.dp))
+            }
+
+            else -> {
+                PatientContent(
+                    navController = navController,
+                    uiState = uiState,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
+
         BottomBar(navController)
     }
-    if(showSelectionDialog) {
+}
+
+@Composable
+fun PatientContent(
+    navController: NavController,
+    uiState: PatientDetailUiState,
+    modifier: Modifier = Modifier
+) {
+    var showSelectionDialog by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState())
+    ) {
+        PatientHeaderCard(uiState = uiState)
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        InfoBlock(
+            items = listOf(
+                "ID pacient" to uiState.patientIdText,
+                "Núm. de telèfon" to uiState.phoneText,
+                "Domicili" to uiState.addressText,
+                "E-mail" to uiState.emailText,
+                "Població" to uiState.cityText,
+                "Clínica" to uiState.clinicText
+            )
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        InfoBlock(
+            items = listOf(
+                "Historial clínic" to uiState.notesText,
+                "Al·lèrgies" to "No disponible",
+                "Observacions" to uiState.personNotesText
+            )
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        BigActionButton(
+            text = "Odontograma",
+            onClick = { showSelectionDialog = true }
+        )
+
+        Spacer(modifier = Modifier.height(30.dp))
+    }
+
+    if (showSelectionDialog) {
         SelectionDialog(
             onDismiss = { showSelectionDialog = false },
             onTypeSelected = { type ->
                 showSelectionDialog = false
-                navController.navigate("odontogram/${type.name}")
+                navController.navigate("odontogram/${uiState.patient?.patientId}/${type.name}")
             }
         )
     }
 }
 
 @Composable
-fun PatientHeaderCard() {
+fun PatientLoadingContent(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+fun PatientErrorContent(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 30.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = message,
+            color = MaterialTheme.colorScheme.error
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = onRetry) {
+            Text("Tornar-ho a provar")
+        }
+    }
+}
+
+@Composable
+fun PatientHeaderCard(uiState: PatientDetailUiState) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -118,7 +215,6 @@ fun PatientHeaderCard() {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // FOTO
             Image(
                 painter = painterResource(R.drawable.ic_launcher_foreground),
                 contentDescription = null,
@@ -127,24 +223,40 @@ fun PatientHeaderCard() {
                     .clip(RoundedCornerShape(50)),
                 contentScale = ContentScale.Crop
             )
+
             Spacer(modifier = Modifier.width(16.dp))
+
             Column {
                 Text(
-                    "Nom Pacient",
+                    text = uiState.fullName,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
 
-                Text("Edat XX - Gènere X", color = Color.Gray)
-                Text("D. de naix. DD/MM/YYYY", color = Color.Gray)
-                Text("ID #XXXXXX", color = Color.Gray)
+                Text(
+                    text = "Edat: ${uiState.ageText} - Gènere: ${uiState.genderText}",
+                    color = Color.Gray
+                )
+
+                Text(
+                    text = "Data de naixement: ${uiState.birthDateText}",
+                    color = Color.Gray
+                )
+
+                Text(
+                    text = "ID ${uiState.patientIdText}",
+                    color = Color.Gray
+                )
             }
         }
     }
 }
 
 @Composable
-fun InfoBlock(title: String? = null, items: List<Pair<String, String>>) {
+fun InfoBlock(
+    title: String? = null,
+    items: List<Pair<String, String>>
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -158,6 +270,7 @@ fun InfoBlock(title: String? = null, items: List<Pair<String, String>>) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
+
         Surface(
             shape = RoundedCornerShape(16.dp),
             shadowElevation = 6.dp
@@ -176,20 +289,26 @@ fun InfoBlock(title: String? = null, items: List<Pair<String, String>>) {
                             modifier = Modifier.weight(1f),
                             fontWeight = FontWeight.Bold
                         )
-                        Divider(modifier = Modifier
-                            .fillMaxHeight()
-                            .width(1.dp),
-                            thickness = DividerDefaults.Thickness, color = Color.Gray.copy(0.4f))
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Box(
+
+                        HorizontalDivider(
                             modifier = Modifier
-                                .weight(1.5f)
-                                .height(20.dp)
-                                .background(Color.Gray.copy(0.3f), RoundedCornerShape(4.dp))
+                                .fillMaxHeight()
+                                .width(1.dp),
+                            thickness = DividerDefaults.Thickness,
+                            color = Color.Gray.copy(0.4f)
+                        )
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        Text(
+                            text = item.second.ifBlank { "No disponible" },
+                            modifier = Modifier.weight(1.5f),
+                            color = Color.Gray
                         )
                     }
+
                     if (index != items.lastIndex) {
-                        Divider(color = Color.Gray.copy(0.3f))
+                        HorizontalDivider(color = Color.Gray.copy(0.3f))
                     }
                 }
             }
@@ -198,26 +317,32 @@ fun InfoBlock(title: String? = null, items: List<Pair<String, String>>) {
 }
 
 @Composable
-fun BigActionButton(text: String, onClick: () -> Unit) {
+fun BigActionButton(
+    text: String,
+    onClick: () -> Unit
+) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 30.dp),
         shape = RoundedCornerShape(20.dp),
         shadowElevation = 6.dp,
-        onClick = onClick,
+        onClick = onClick
     ) {
         Row(
-            modifier = Modifier
-                .padding(20.dp),
+            modifier = Modifier.padding(20.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text,
+                text = text,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
-            Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null)
+
+            Icon(
+                Icons.AutoMirrored.Outlined.ArrowForward,
+                contentDescription = null
+            )
         }
     }
 }
@@ -226,8 +351,7 @@ fun BigActionButton(text: String, onClick: () -> Unit) {
 fun SelectionDialog(
     onDismiss: () -> Unit,
     onTypeSelected: (OdontogramType) -> Unit
-)
-{
+) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(20.dp),
@@ -248,24 +372,24 @@ fun SelectionDialog(
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
-                    /*IconButton(onClick = onDismiss) {
-                        Icon(Icons.Rounded.Close, contentDescription = null)
-                    }*/
                 }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 15.dp, vertical = 25.dp),
-                    Arrangement.SpaceBetween,
-                    Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Surface(
                         onClick = {
                             onTypeSelected(OdontogramType.CHILD)
                             onDismiss()
-                        }, shape = RoundedCornerShape(10.dp),
+                        },
+                        shape = RoundedCornerShape(10.dp),
                         shadowElevation = 2.dp,
-                        color = BlueGrey40, contentColor = Color.Unspecified,
+                        color = BlueGrey40,
+                        contentColor = Color.Unspecified,
                         modifier = Modifier.size(70.dp)
                     ) {
                         Column(
@@ -274,6 +398,7 @@ fun SelectionDialog(
                             Alignment.CenterHorizontally
                         ) {
                             Icon(Icons.Outlined.Face, contentDescription = null)
+
                             Text(
                                 text = "Nen",
                                 style = MaterialTheme.typography.titleSmall,
@@ -284,13 +409,16 @@ fun SelectionDialog(
                             )
                         }
                     }
+
                     Surface(
                         onClick = {
                             onTypeSelected(OdontogramType.BOTH)
                             onDismiss()
-                        }, shape = RoundedCornerShape(10.dp),
+                        },
+                        shape = RoundedCornerShape(10.dp),
                         shadowElevation = 2.dp,
-                        color = BlueGrey40, contentColor = Color.Unspecified,
+                        color = BlueGrey40,
+                        contentColor = Color.Unspecified,
                         modifier = Modifier.size(70.dp)
                     ) {
                         Column(
@@ -299,6 +427,7 @@ fun SelectionDialog(
                             Alignment.CenterHorizontally
                         ) {
                             Icon(Icons.Filled.Face, contentDescription = null)
+
                             Text(
                                 text = "Jove",
                                 style = MaterialTheme.typography.titleSmall,
@@ -309,13 +438,16 @@ fun SelectionDialog(
                             )
                         }
                     }
+
                     Surface(
                         onClick = {
                             onTypeSelected(OdontogramType.ADULT)
                             onDismiss()
-                        }, shape = RoundedCornerShape(10.dp),
+                        },
+                        shape = RoundedCornerShape(10.dp),
                         shadowElevation = 2.dp,
-                        color = BlueGrey40, contentColor = Color.Unspecified,
+                        color = BlueGrey40,
+                        contentColor = Color.Unspecified,
                         modifier = Modifier.size(70.dp)
                     ) {
                         Column(
@@ -324,6 +456,7 @@ fun SelectionDialog(
                             Alignment.CenterHorizontally
                         ) {
                             Icon(Icons.Outlined.AccountCircle, contentDescription = null)
+
                             Text(
                                 text = "Adult",
                                 style = MaterialTheme.typography.titleSmall,
@@ -334,7 +467,6 @@ fun SelectionDialog(
                             )
                         }
                     }
-
                 }
             }
         }

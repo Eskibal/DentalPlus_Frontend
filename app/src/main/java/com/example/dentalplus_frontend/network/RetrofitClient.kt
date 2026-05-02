@@ -13,12 +13,31 @@ object RetrofitClient {
         .writeTimeout(20, TimeUnit.SECONDS)
         .build()
 
-    val authApi: AuthApi by lazy {
+    private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(ApiConstants.BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(AuthApi::class.java)
+    }
+
+    val authApi: AuthApi by lazy {
+        retrofit.create(AuthApi::class.java)
+    }
+
+    val userApi: UserApi by lazy {
+        retrofit.create(UserApi::class.java)
+    }
+
+    val appointmentApi: AppointmentApi by lazy {
+        retrofit.create(AppointmentApi::class.java)
+    }
+
+    val patientApi: PatientApi by lazy {
+        retrofit.create(PatientApi::class.java)
+    }
+
+    val odontogramApi: OdontogramApi by lazy {
+        retrofit.create(OdontogramApi::class.java)
     }
 }
