@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.dentalplus_frontend.R
 import com.example.dentalplus_frontend.model.BackendAppointmentDto
 import com.example.dentalplus_frontend.model.BackendPatientDto
@@ -61,7 +62,7 @@ data class PatientPreview(
     val patientId: Long,
     val name: String,
     val nextAppointment: String,
-    val image: Int
+    val imageUrl: String?
 )
 
 @OptIn(FlowPreview::class)
@@ -273,13 +274,9 @@ fun PatientCard(
             modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(patient.image),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(50.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
+            PatientListImageFromUrl(
+                imageUrl = patient.imageUrl,
+                size = 50
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -307,6 +304,34 @@ fun PatientCard(
     }
 }
 
+@Composable
+fun PatientListImageFromUrl(
+    imageUrl: String?,
+    size: Int
+) {
+    if (!imageUrl.isNullOrBlank()) {
+        AsyncImage(
+            model = imageUrl.trim(),
+            contentDescription = null,
+            modifier = Modifier
+                .size(size.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(R.drawable.ic_launcher_foreground),
+            error = painterResource(R.drawable.ic_launcher_foreground)
+        )
+    } else {
+        Image(
+            painter = painterResource(R.drawable.ic_launcher_foreground),
+            contentDescription = null,
+            modifier = Modifier
+                .size(size.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+
 fun BackendPatientDto.toPatientPreview(
     appointments: List<BackendAppointmentDto>
 ): PatientPreview {
@@ -314,7 +339,8 @@ fun BackendPatientDto.toPatientPreview(
         person?.name,
         person?.firstSurname,
         person?.secondSurname
-    ).filter { it.isNotBlank() }
+    )
+        .filter { it.isNotBlank() }
         .joinToString(" ")
         .ifBlank { "Pacient sense nom" }
 
@@ -334,6 +360,6 @@ fun BackendPatientDto.toPatientPreview(
         patientId = patientId ?: -1L,
         name = fullName,
         nextAppointment = appointmentText,
-        image = R.drawable.ic_launcher_foreground
+        imageUrl = person?.profileImage?.trim()
     )
 }

@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.dentalplus_frontend.R
 import com.example.dentalplus_frontend.navigation.BottomBar
 import com.example.dentalplus_frontend.navigation.Header
@@ -175,13 +176,9 @@ fun DoctorHeaderCard(uiState: ProfileUiState) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(R.drawable.ic_launcher_foreground),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(70.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
+            ProfileRemoteImage(
+                imageUrl = uiState.profileImage,
+                size = 70
             )
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -204,6 +201,34 @@ fun DoctorHeaderCard(uiState: ProfileUiState) {
                 )
             }
         }
+    }
+}
+
+@Composable
+fun ProfileRemoteImage(
+    imageUrl: String?,
+    size: Int
+) {
+    if (!imageUrl.isNullOrBlank()) {
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = null,
+            modifier = Modifier
+                .size(size.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(R.drawable.ic_launcher_foreground),
+            error = painterResource(R.drawable.ic_launcher_foreground)
+        )
+    } else {
+        Image(
+            painter = painterResource(R.drawable.ic_launcher_foreground),
+            contentDescription = null,
+            modifier = Modifier
+                .size(size.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
     }
 }
 

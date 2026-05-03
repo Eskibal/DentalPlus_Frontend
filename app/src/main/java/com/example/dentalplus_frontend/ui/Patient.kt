@@ -3,7 +3,6 @@ package com.example.dentalplus_frontend.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.dentalplus_frontend.R
 import com.example.dentalplus_frontend.model.OdontogramType
 import com.example.dentalplus_frontend.navigation.BottomBar
@@ -215,13 +216,9 @@ fun PatientHeaderCard(uiState: PatientDetailUiState) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(R.drawable.ic_launcher_foreground),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(70.dp)
-                    .clip(RoundedCornerShape(50)),
-                contentScale = ContentScale.Crop
+            PatientDetailImageFromUrl(
+                imageUrl = uiState.patient?.person?.profileImage,
+                size = 70
             )
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -249,6 +246,34 @@ fun PatientHeaderCard(uiState: PatientDetailUiState) {
                 )
             }
         }
+    }
+}
+
+@Composable
+fun PatientDetailImageFromUrl(
+    imageUrl: String?,
+    size: Int
+) {
+    if (!imageUrl.isNullOrBlank()) {
+        AsyncImage(
+            model = imageUrl.trim(),
+            contentDescription = null,
+            modifier = Modifier
+                .size(size.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(R.drawable.ic_launcher_foreground),
+            error = painterResource(R.drawable.ic_launcher_foreground)
+        )
+    } else {
+        Image(
+            painter = painterResource(R.drawable.ic_launcher_foreground),
+            contentDescription = null,
+            modifier = Modifier
+                .size(size.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
     }
 }
 
