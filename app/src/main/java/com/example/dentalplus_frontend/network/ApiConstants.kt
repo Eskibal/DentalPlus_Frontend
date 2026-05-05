@@ -9,5 +9,5 @@ object ApiConstants {
      * Tu IP correcta según ipconfig:
      * 192.168.68.102
      */
-    const val BASE_URL = "http://192.168.68.102:8080/"
+    const val BASE_URL = "https://dentalplus-backend.onrender.com/"
 }
