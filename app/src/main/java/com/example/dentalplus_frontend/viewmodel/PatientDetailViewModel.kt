@@ -31,6 +31,9 @@ data class PatientDetailUiState(
                 .ifBlank { "Pacient sense nom" }
         }
 
+    val profileImage: String?
+        get() = patient?.person?.profileImage
+
     val ageText: String
         get() {
             val birthDate = patient?.person?.birthDate ?: return "No disponible"

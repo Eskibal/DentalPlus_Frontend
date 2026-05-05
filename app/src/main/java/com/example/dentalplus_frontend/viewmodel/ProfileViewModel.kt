@@ -13,77 +13,26 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.time.LocalDate
 import java.time.Period
+import java.time.format.DateTimeParseException
 
 data class ProfileUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val profile: ProfileDto? = null
-) {
-    val fullName: String
-        get() {
-            val person = profile?.person
-            return listOfNotNull(
-                person?.name,
-                person?.firstSurname,
-                person?.secondSurname
-            ).filter { it.isNotBlank() }
-                .joinToString(" ")
-                .ifBlank { profile?.username ?: "Usuari" }
-        }
 
-    val roleText: String
-        get() {
-            val role = profile?.roles?.firstOrNull()?.roleType?.uppercase()
-            return when (role) {
-                "ADMIN" -> "Administrador"
-                "DENTIST" -> "Dentista"
-                "RECEPTIONIST" -> "Recepcionista"
-                "PATIENT" -> "Pacient"
-                else -> "Usuari"
-            }
-        }
+    val fullName: String = "Usuari sense nom",
+    val roleText: String = "No disponible",
+    val clinicName: String = "No disponible",
 
-    val clinicName: String
-        get() = profile?.roles?.firstOrNull()?.clinicName ?: "Clínica no disponible"
+    val ageText: String = "No disponible",
+    val genderText: String = "No disponible",
 
-    val genderText: String
-        get() {
-            return when (profile?.person?.gender?.uppercase()) {
-                "MALE", "MAN", "HOME" -> "Home"
-                "FEMALE", "WOMAN", "DONA" -> "Dona"
-                "OTHER", "ALTRE" -> "Altre"
-                else -> "No disponible"
-            }
-        }
+    val emailText: String = "No disponible",
+    val phoneText: String = "No disponible",
+    val cityText: String = "No disponible",
+    val addressText: String = "No disponible",
 
-    val ageText: String
-        get() {
-            val birthDate = profile?.person?.birthDate ?: return "No disponible"
-
-            return try {
-                val age = Period.between(LocalDate.parse(birthDate), LocalDate.now()).years
-                "$age anys"
-            } catch (e: Exception) {
-                "No disponible"
-            }
-        }
-
-    val emailText: String
-        get() = profile?.person?.email ?: "No disponible"
-
-    val phoneText: String
-        get() {
-            val prefix = profile?.person?.phonePrefix.orEmpty()
-            val number = profile?.person?.phoneNumber.orEmpty()
-            return "$prefix $number".trim().ifBlank { "No disponible" }
-        }
-
-    val cityText: String
-        get() = profile?.person?.city ?: "No disponible"
-
-    val addressText: String
-        get() = profile?.person?.address ?: "No disponible"
-}
+    val profileImage: String? = null
+)
 
 class ProfileViewModel : ViewModel() {
 
@@ -111,10 +60,16 @@ class ProfileViewModel : ViewModel() {
                 val response = RetrofitClient.userApi.getMyProfile(token)
 
                 if (response.isSuccessful) {
-                    _uiState.value = ProfileUiState(
-                        isLoading = false,
-                        profile = response.body()
-                    )
+                    val profile = response.body()
+
+                    if (profile != null) {
+                        _uiState.value = profile.toProfileUiState()
+                    } else {
+                        _uiState.value = ProfileUiState(
+                            isLoading = false,
+                            errorMessage = "No s'han rebut dades del perfil"
+                        )
+                    }
                 } else {
                     _uiState.value = ProfileUiState(
                         isLoading = false,
@@ -142,5 +97,95 @@ class ProfileViewModel : ViewModel() {
                 )
             }
         }
+    }
+}
+
+private fun ProfileDto.toProfileUiState(): ProfileUiState {
+    val person = person
+
+    val fullName = listOfNotNull(
+        person?.name,
+        person?.firstSurname,
+        person?.secondSurname
+    )
+        .filter { it.isNotBlank() }
+        .joinToString(" ")
+        .ifBlank { username ?: "Usuari sense nom" }
+
+    val mainRole = roles
+        ?.firstOrNull { it.active != false }
+        ?: roles?.firstOrNull()
+
+    return ProfileUiState(
+        isLoading = false,
+        errorMessage = null,
+
+        fullName = fullName,
+        roleText = mainRole?.roleType.toCatalanRole(),
+        clinicName = mainRole?.clinicName.ifNullOrBlank("No disponible"),
+
+        ageText = person?.birthDate.toAgeText(),
+        genderText = person?.gender.toCatalanGender(),
+
+        emailText = person?.email.ifNullOrBlank("No disponible"),
+        phoneText = buildPhoneText(
+            prefix = person?.phonePrefix,
+            number = person?.phoneNumber
+        ),
+        cityText = person?.city.ifNullOrBlank("No disponible"),
+        addressText = person?.address.ifNullOrBlank("No disponible"),
+
+        profileImage = person?.profileImage
+    )
+}
+
+private fun String?.ifNullOrBlank(defaultValue: String): String {
+    return if (this.isNullOrBlank()) defaultValue else this
+}
+
+private fun String?.toCatalanRole(): String {
+    return when (this?.uppercase()) {
+        "ADMIN" -> "Administrador"
+        "DENTIST" -> "Dentista"
+        "RECEPTIONIST" -> "Recepcionista"
+        "PATIENT" -> "Pacient"
+        else -> "No disponible"
+    }
+}
+
+private fun String?.toCatalanGender(): String {
+    return when (this?.uppercase()) {
+        "MALE", "MASCULINO", "HOME" -> "Home"
+        "FEMALE", "FEMENINO", "DONA" -> "Dona"
+        "OTHER", "ALTRE" -> "Altre"
+        else -> "No disponible"
+    }
+}
+
+private fun String?.toAgeText(): String {
+    if (this.isNullOrBlank()) {
+        return "No disponible"
+    }
+
+    return try {
+        val birthDate = LocalDate.parse(this)
+        val age = Period.between(birthDate, LocalDate.now()).years
+        "$age anys"
+    } catch (e: DateTimeParseException) {
+        "No disponible"
+    }
+}
+
+private fun buildPhoneText(
+    prefix: String?,
+    number: String?
+): String {
+    val cleanPrefix = prefix.orEmpty().trim()
+    val cleanNumber = number.orEmpty().trim()
+
+    return when {
+        cleanPrefix.isNotBlank() && cleanNumber.isNotBlank() -> "$cleanPrefix $cleanNumber"
+        cleanNumber.isNotBlank() -> cleanNumber
+        else -> "No disponible"
     }
 }
