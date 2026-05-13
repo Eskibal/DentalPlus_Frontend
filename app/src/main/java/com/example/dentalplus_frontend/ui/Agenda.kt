@@ -304,7 +304,7 @@ fun AgendaScreen(
                     startTime = start
                 )
             },
-            onCreate = { patientId, dentistId, boxId, start, end, notes ->
+            onCreate = { patientId, dentistId, boxId, start, end, treatment, notes ->
                 agendaViewModel.createAppointment(
                     context = context,
                     selectedDate = selectedDate,
@@ -313,6 +313,7 @@ fun AgendaScreen(
                     boxId = boxId,
                     start = start,
                     end = end,
+                    treatment = treatment,
                     notes = notes,
                     onSuccess = {
                         showCreateDialog = false
@@ -320,7 +321,7 @@ fun AgendaScreen(
                     }
                 )
             },
-            onUpdate = { appointmentId, patientId, dentistId, boxId, start, end, notes ->
+            onUpdate = { appointmentId, patientId, dentistId, boxId, start, end, treatment, notes ->
                 agendaViewModel.updateAppointment(
                     context = context,
                     selectedDate = selectedDate,
@@ -330,6 +331,7 @@ fun AgendaScreen(
                     boxId = boxId,
                     start = start,
                     end = end,
+                    treatment = treatment,
                     notes = notes,
                     onSuccess = {
                         showCreateDialog = false
@@ -485,6 +487,7 @@ fun CreateAppointmentDialog(
         boxId: Long,
         start: String,
         end: String,
+        treatment: String,
         notes: String?
     ) -> Unit,
     onUpdate: (
@@ -494,15 +497,28 @@ fun CreateAppointmentDialog(
         boxId: Long,
         start: String,
         end: String,
+        treatment: String,
         notes: String?
     ) -> Unit
 ) {
     val isEditing = editingAppointment != null
 
+    val treatments = listOf(
+        "Neteja bucal" to 30,
+        "Empastament" to 45,
+        "Extracció" to 60,
+        "Revisió" to 20,
+        "Ortodòncia" to 30
+    )
+
     var selectedPatient by remember(editingAppointment) {
         mutableStateOf<BackendPatientDto?>(
             uiState.patients.firstOrNull { it.patientId == editingAppointment?.patientId }
         )
+    }
+
+    var selectedTreatment by remember(editingAppointment) {
+        mutableStateOf(editingAppointment?.treatment.orEmpty())
     }
 
     var selectedDentist by remember(editingAppointment, uiState.availableDentists) {
@@ -557,6 +573,7 @@ fun CreateAppointmentDialog(
     var error by remember { mutableStateOf<String?>(null) }
 
     var patientExpanded by remember { mutableStateOf(false) }
+    var treatmentExpanded by remember { mutableStateOf(false) }
     var dentistExpanded by remember { mutableStateOf(false) }
     var boxExpanded by remember { mutableStateOf(false) }
 
@@ -594,6 +611,50 @@ fun CreateAppointmentDialog(
                 )
 
                 Spacer(modifier = Modifier.height(15.dp))
+
+                ExposedDropdownMenuBox(
+                    expanded = treatmentExpanded,
+                    onExpandedChange = { treatmentExpanded = !treatmentExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedTreatment,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Tractament") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = treatmentExpanded)
+                        },
+                        modifier = Modifier
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                            .fillMaxWidth()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = treatmentExpanded,
+                        onDismissRequest = { treatmentExpanded = false }
+                    ) {
+                        treatments.forEach { (name, duration) ->
+                            DropdownMenuItem(
+                                text = { Text(name) },
+                                onClick = {
+                                    selectedTreatment = name
+                                    treatmentExpanded = false
+                                    if (start.isNotBlank()) {
+                                        try {
+                                            val startTime = LocalTime.parse(start)
+                                            end = startTime.plusMinutes(duration.toLong())
+                                                .format(DateTimeFormatter.ofPattern("HH:mm"))
+                                        } catch (e: Exception) {
+                                            // Silently handle parse errors
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
                     value = notes,
@@ -831,6 +892,10 @@ fun CreateAppointmentDialog(
                                 error = "Selecciona un pacient"
                             }
 
+                            selectedTreatment.isBlank() -> {
+                                error = "Selecciona un tractament"
+                            }
+
                             cleanDentistId == null -> {
                                 error = "Selecciona un dentista"
                             }
@@ -856,6 +921,7 @@ fun CreateAppointmentDialog(
                                     cleanBoxId,
                                     start,
                                     end,
+                                    selectedTreatment,
                                     notes
                                 )
                             }
@@ -868,6 +934,7 @@ fun CreateAppointmentDialog(
                                     cleanBoxId,
                                     start,
                                     end,
+                                    selectedTreatment,
                                     notes
                                 )
                             }
@@ -1064,6 +1131,16 @@ fun AppointmentCard(
                     color = if (isHighRisk) Color.Black else Color.Unspecified
                 )
 
+                if (appointment.treatment?.isNotBlank() == true) {
+                    Text(
+                        text = appointment.treatment,
+                        color = if (isHighRisk) Color(0xFFB71C1C) else Color(0xFF1F4E5F),
+                        maxLines = 1,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
                 Text(
                     text = appointment.dentistName ?: "Dentista no assignat",
                     color = if (isHighRisk) Color.DarkGray else Color.Gray,
@@ -1153,6 +1230,14 @@ fun AppointmentDialog(
                     Text("Pacient:  ")
                     Text(
                         text = appointment.patientName ?: "No disponible",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Row {
+                    Text("Tractament: ")
+                    Text(
+                        text = appointment.treatment ?: "No especificat",
                         fontWeight = FontWeight.Bold
                     )
                 }

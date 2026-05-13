@@ -175,6 +175,7 @@ class AgendaViewModel : ViewModel() {
         boxId: Long,
         start: String,
         end: String,
+        treatment: String,
         notes: String?,
         onSuccess: () -> Unit
     ) {
@@ -187,6 +188,7 @@ class AgendaViewModel : ViewModel() {
             boxId = boxId,
             start = start,
             end = end,
+            treatment = treatment,
             notes = notes,
             onSuccess = onSuccess
         )
@@ -201,6 +203,7 @@ class AgendaViewModel : ViewModel() {
         boxId: Long,
         start: String,
         end: String,
+        treatment: String,
         notes: String?,
         onSuccess: () -> Unit
     ) {
@@ -213,6 +216,7 @@ class AgendaViewModel : ViewModel() {
             boxId = boxId,
             start = start,
             end = end,
+            treatment = treatment,
             notes = notes,
             onSuccess = onSuccess
         )
@@ -227,6 +231,7 @@ class AgendaViewModel : ViewModel() {
         boxId: Long,
         start: String,
         end: String,
+        treatment: String,
         notes: String?,
         onSuccess: () -> Unit
     ) {
@@ -259,6 +264,7 @@ class AgendaViewModel : ViewModel() {
                     boxId = boxId,
                     startDateTime = "${selectedDate}T${normalizeTime(start)}:00",
                     endDateTime = "${selectedDate}T${normalizeTime(end)}:00",
+                    treatment = treatment,
                     notes = notes?.takeIf { it.isNotBlank() },
                     status = "SCHEDULED",
                     active = true

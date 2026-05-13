@@ -11,6 +11,7 @@ data class BackendAppointmentDto(
     val startDateTime: String?,
     val endDateTime: String?,
     val status: String?,
+    val treatment: String?,
     val notes: String?,
     val active: Boolean?
 )
