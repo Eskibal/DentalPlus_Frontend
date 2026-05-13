@@ -7,6 +7,7 @@ data class BackendPatientDto(
     val clinicName: String?,
     val registrationDate: String?,
     val active: Boolean?,
+    val medicalAlert: String?,
     val notes: String?,
     val person: PersonDto?,
     val documents: List<DocumentDto>?
