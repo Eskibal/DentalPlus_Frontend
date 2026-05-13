@@ -86,6 +86,9 @@ data class PatientDetailUiState(
 
     val clinicText: String
         get() = patient?.clinicName ?: "No disponible"
+
+    val medicalAlertText: String
+        get() = patient?.medicalAlert ?: "No disponible"
 }
 
 class PatientDetailViewModel : ViewModel() {

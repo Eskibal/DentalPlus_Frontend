@@ -138,7 +138,7 @@ fun PatientContent(
         InfoBlock(
             items = listOf(
                 "Historial clínic" to uiState.notesText,
-                "Al·lèrgies" to "No disponible",
+                "Al·lèrgies" to uiState.medicalAlertText,
                 "Observacions" to uiState.personNotesText
             )
         )

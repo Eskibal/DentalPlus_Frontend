@@ -240,6 +240,7 @@ fun AgendaScreen(
                         HourRow(
                             hour = hour,
                             appointments = filteredAppointments,
+                            patients = uiState.patients,
                             onAppointmentClick = { selectedAppointment = it }
                         )
                     }
@@ -541,6 +542,15 @@ fun CreateAppointmentDialog(
         mutableStateOf(agendaExtractHourAndMinute(editingAppointment?.endDateTime).orEmpty())
     }
 
+    val isHighRiskPatient = selectedPatient?.medicalAlert?.isNotBlank() == true
+
+    LaunchedEffect(selectedPatient) {
+        if (isHighRiskPatient) {
+            start = "18:00"
+            end = "19:00"
+        }
+    }
+
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
 
@@ -638,13 +648,16 @@ fun CreateAppointmentDialog(
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("Inici") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !isHighRiskPatient
                         )
-                        Box(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .clickable { showStartTimePicker = true }
-                        )
+                        if (!isHighRiskPatient) {
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clickable { showStartTimePicker = true }
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.width(10.dp))
@@ -655,13 +668,16 @@ fun CreateAppointmentDialog(
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("Fi") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !isHighRiskPatient
                         )
-                        Box(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .clickable { showEndTimePicker = true }
-                        )
+                        if (!isHighRiskPatient) {
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clickable { showEndTimePicker = true }
+                            )
+                        }
                     }
                 }
 
@@ -903,6 +919,7 @@ fun CreateAppointmentDialog(
 fun HourRow(
     hour: String,
     appointments: List<BackendAppointmentDto>,
+    patients: List<BackendPatientDto>,
     onAppointmentClick: (BackendAppointmentDto) -> Unit
 ) {
     val hourAppointments = appointments.filter { appointment ->
@@ -952,8 +969,12 @@ fun HourRow(
                 val widthFraction = if (count > 1) 1f - (index * 0.05f) else 1f
                 val horizontalPaddingStart = (6 + (index * 12)).dp
 
+                val isHighRisk = patients.find { it.patientId == appointment.patientId }
+                    ?.medicalAlert?.isNotBlank() == true
+
                 AppointmentCard(
                     appointment = appointment,
+                    isHighRisk = isHighRisk,
                     onClick = { onAppointmentClick(appointment) },
                     modifier = Modifier
                         .offset(y = offsetY)
@@ -975,13 +996,18 @@ fun HourRow(
 @Composable
 fun AppointmentCard(
     appointment: BackendAppointmentDto,
+    isHighRisk: Boolean = false,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val backgroundColor = if (isHighRisk) Color(0xFFFFEBEE) else Color(0xFFEAF7FA)
+    val iconTintColor = if (isHighRisk) Color(0xFFD32F2F) else Blue40
+    val textColor = if (isHighRisk) Color(0xFFB71C1C) else Color(0xFF1F4E5F)
+
     Card(
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFEAF7FA)
+            containerColor = backgroundColor
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         modifier = modifier
@@ -1004,7 +1030,7 @@ fun AppointmentCard(
                 Icon(
                     imageVector = Icons.Outlined.DateRange,
                     contentDescription = null,
-                    tint = Blue40
+                    tint = iconTintColor
                 )
             }
 
@@ -1017,14 +1043,14 @@ fun AppointmentCard(
                 Text(
                     text = "${agendaExtractHourAndMinute(appointment.startDateTime) ?: "--:--"} - ${agendaExtractFormattedEndTime(appointment.endDateTime) ?: "--:--"}",
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1F4E5F),
+                    color = textColor,
                     style = MaterialTheme.typography.bodySmall
                 )
 
                 if (appointment.notes?.isNotBlank() == true) {
                     Text(
                         text = appointment.notes,
-                        color = Color(0xFF5E7E86),
+                        color = if (isHighRisk) Color(0xFF7F0000) else Color(0xFF5E7E86),
                         maxLines = 1,
                         style = MaterialTheme.typography.labelSmall
                     )
@@ -1034,12 +1060,13 @@ fun AppointmentCard(
                     text = appointment.patientName ?: "Pacient sense nom",
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isHighRisk) Color.Black else Color.Unspecified
                 )
 
                 Text(
                     text = appointment.dentistName ?: "Dentista no assignat",
-                    color = Color.Gray,
+                    color = if (isHighRisk) Color.DarkGray else Color.Gray,
                     maxLines = 1,
                     style = MaterialTheme.typography.labelSmall
                 )
@@ -1049,8 +1076,16 @@ fun AppointmentCard(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Icon(Icons.Outlined.Face, contentDescription = null, tint = Color.Gray)
-                Icon(Icons.Outlined.Person, contentDescription = null, tint = Color.Gray)
+                Icon(
+                    Icons.Outlined.Face,
+                    contentDescription = null,
+                    tint = if (isHighRisk) Color(0xFFD32F2F) else Color.Gray
+                )
+                Icon(
+                    Icons.Outlined.Person,
+                    contentDescription = null,
+                    tint = if (isHighRisk) Color(0xFFD32F2F) else Color.Gray
+                )
             }
         }
     }
