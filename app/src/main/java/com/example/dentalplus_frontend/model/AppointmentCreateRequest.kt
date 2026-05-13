@@ -7,6 +7,7 @@ data class AppointmentCreateRequest(
     val startDateTime: String,
     val endDateTime: String,
     val status: String = "SCHEDULED",
+    val treatment: String,
     val notes: String? = null,
     val active: Boolean = true
 )
