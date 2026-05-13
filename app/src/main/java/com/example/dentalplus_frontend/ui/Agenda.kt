@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -51,7 +52,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -412,6 +415,63 @@ fun DatePickerModal(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+fun TimePickerModal(
+    onTimeSelected: (String) -> Unit,
+    onDismiss: () -> Unit,
+    initialTime: String = "08:00"
+) {
+    val initialHour = initialTime.split(":").getOrNull(0)?.toIntOrNull() ?: 8
+    val initialMinute = initialTime.split(":").getOrNull(1)?.toIntOrNull() ?: 0
+    val timePickerState = rememberTimePickerState(
+        initialHour = initialHour,
+        initialMinute = initialMinute,
+        is24Hour = true
+    )
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            tonalElevation = 6.dp,
+            modifier = Modifier.width(IntrinsicSize.Min)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Selecciona l'hora",
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
+                )
+                TimePicker(state = timePickerState)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel·lar")
+                    }
+                    TextButton(
+                        onClick = {
+                            val hour = timePickerState.hour.toString().padStart(2, '0')
+                            val minute = timePickerState.minute.toString().padStart(2, '0')
+                            onTimeSelected("$hour:$minute")
+                        }
+                    ) {
+                        Text("Acceptar")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun CreateAppointmentDialog(
     selectedDate: LocalDate,
     uiState: AgendaUiState,
@@ -480,6 +540,9 @@ fun CreateAppointmentDialog(
     var end by remember(editingAppointment) {
         mutableStateOf(agendaExtractHourAndMinute(editingAppointment?.endDateTime).orEmpty())
     }
+
+    var showStartTimePicker by remember { mutableStateOf(false) }
+    var showEndTimePicker by remember { mutableStateOf(false) }
 
     var error by remember { mutableStateOf<String?>(null) }
 
@@ -569,25 +632,37 @@ fun CreateAppointmentDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row {
-                    OutlinedTextField(
-                        value = start,
-                        onValueChange = {
-                            start = it
-                            selectedDentist = null
-                            selectedBox = null
-                        },
-                        label = { Text("Inici, ex. 10:00") },
-                        modifier = Modifier.weight(1f)
-                    )
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = start,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Inici") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clickable { showStartTimePicker = true }
+                        )
+                    }
 
                     Spacer(modifier = Modifier.width(10.dp))
 
-                    OutlinedTextField(
-                        value = end,
-                        onValueChange = { end = it },
-                        label = { Text("Fi, ex. 10:30") },
-                        modifier = Modifier.weight(1f)
-                    )
+                    Box(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = end,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Fi") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clickable { showEndTimePicker = true }
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -798,6 +873,30 @@ fun CreateAppointmentDialog(
             }
         }
     }
+
+    if (showStartTimePicker) {
+        TimePickerModal(
+            initialTime = start.ifBlank { "08:00" },
+            onTimeSelected = {
+                start = it
+                selectedDentist = null
+                selectedBox = null
+                showStartTimePicker = false
+            },
+            onDismiss = { showStartTimePicker = false }
+        )
+    }
+
+    if (showEndTimePicker) {
+        TimePickerModal(
+            initialTime = end.ifBlank { "08:30" },
+            onTimeSelected = {
+                end = it
+                showEndTimePicker = false
+            },
+            onDismiss = { showEndTimePicker = false }
+        )
+    }
 }
 
 @Composable
@@ -833,29 +932,36 @@ fun HourRow(
         )
 
         Box(modifier = Modifier.fillMaxSize()) {
+            val count = hourAppointments.size
             hourAppointments.forEachIndexed { index, appointment ->
                 val start = agendaExtractHourAndMinute(appointment.startDateTime) ?: "00:00"
                 val minutes = start.split(":").getOrNull(1)?.toIntOrNull() ?: 0
 
-                val durationMinutes = agendaAppointmentDurationMinutes(
+                val durationMinutes = (agendaAppointmentDurationMinutes(
                     appointment.startDateTime,
                     appointment.endDateTime
-                ).coerceAtLeast(30)
+                ) - 5).coerceAtLeast(25)
 
                 val cardHeight = ((durationMinutes / 60f) * rowHeight.value).dp
-                    .coerceAtLeast(64.dp)
+                    .coerceAtLeast(48.dp)
 
                 val offsetY = ((minutes / 60f) * rowHeight.value).dp
+
+                // If multiple appointments start in the same hour, we offset them slightly and reduce width
+                // to make them all somewhat visible even if they overlap.
+                val widthFraction = if (count > 1) 1f - (index * 0.05f) else 1f
+                val horizontalPaddingStart = (6 + (index * 12)).dp
 
                 AppointmentCard(
                     appointment = appointment,
                     onClick = { onAppointmentClick(appointment) },
                     modifier = Modifier
                         .offset(y = offsetY)
-                        .heightIn(min = 64.dp)
+                        .fillMaxWidth(widthFraction)
+                        .heightIn(min = 48.dp)
                         .height(cardHeight)
                         .padding(
-                            start = if (index % 2 == 0) 6.dp else 18.dp,
+                            start = horizontalPaddingStart,
                             end = 10.dp,
                             top = 4.dp,
                             bottom = 4.dp
@@ -909,30 +1015,33 @@ fun AppointmentCard(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "${agendaExtractHourAndMinute(appointment.startDateTime) ?: "--:--"} - ${agendaExtractHourAndMinute(appointment.endDateTime) ?: "--:--"}",
+                    text = "${agendaExtractHourAndMinute(appointment.startDateTime) ?: "--:--"} - ${agendaExtractFormattedEndTime(appointment.endDateTime) ?: "--:--"}",
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1F4E5F)
-                )
-
-                Text(
-                    text = appointment.notes?.takeIf { it.isNotBlank() }
-                        ?: agendaAppointmentStatusText(appointment.status),
-                    color = Color(0xFF5E7E86),
+                    color = Color(0xFF1F4E5F),
                     style = MaterialTheme.typography.bodySmall
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                if (appointment.notes?.isNotBlank() == true) {
+                    Text(
+                        text = appointment.notes,
+                        color = Color(0xFF5E7E86),
+                        maxLines = 1,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
 
                 Text(
                     text = appointment.patientName ?: "Pacient sense nom",
                     fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodyMedium
+                    maxLines = 1,
+                    style = MaterialTheme.typography.bodySmall
                 )
 
                 Text(
                     text = appointment.dentistName ?: "Dentista no assignat",
                     color = Color.Gray,
-                    style = MaterialTheme.typography.bodySmall
+                    maxLines = 1,
+                    style = MaterialTheme.typography.labelSmall
                 )
             }
 
@@ -994,7 +1103,7 @@ fun AppointmentDialog(
                 )
 
                 Text(
-                    text = "${agendaExtractHourAndMinute(appointment.startDateTime) ?: "--:--"} - ${agendaExtractHourAndMinute(appointment.endDateTime) ?: "--:--"}",
+                    text = "${agendaExtractHourAndMinute(appointment.startDateTime) ?: "--:--"} - ${agendaExtractFormattedEndTime(appointment.endDateTime) ?: "--:--"}",
                     color = Color.Gray
                 )
 
@@ -1128,5 +1237,18 @@ fun agendaAppointmentDurationMinutes(
         if (duration <= 0) 60 else duration
     } catch (e: Exception) {
         60
+    }
+}
+
+/**
+ * Extrae la hora y minutos de una cadena de fecha y hora, restando 5 minutos para el tiempo de cortesía/limpieza.
+ */
+fun agendaExtractFormattedEndTime(dateTime: String?, gapMinutes: Long = 5): String? {
+    val timeStr = agendaExtractHourAndMinute(dateTime) ?: return null
+    return try {
+        val time = LocalTime.parse(timeStr)
+        time.minusMinutes(gapMinutes).format(DateTimeFormatter.ofPattern("HH:mm"))
+    } catch (e: Exception) {
+        timeStr
     }
 }
