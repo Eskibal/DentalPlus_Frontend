@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -69,6 +70,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -90,7 +92,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.Locale
 
-val formatterDatePicker = DateTimeFormatter.ofPattern("dd MMMM", Locale("ca", "ES"))
+val formatterDatePicker = DateTimeFormatter.ofPattern("d 'de' MMMM", Locale("ca", "ES"))
 val formatterDateDialog = DateTimeFormatter.ofPattern("EEEE, dd MMMM", Locale("ca", "ES"))
 
 @Composable
@@ -180,19 +182,28 @@ fun AgendaScreen(
                     containerColor = Blue40,
                     contentColor = Color.White
                 ),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                 modifier = Modifier
-                    .fillMaxWidth(0.5f)
-                    .offset(x = (-45).dp)
-                    .padding(bottom = 10.dp)
+                    .fillMaxWidth(0.46f)
+                    .height(42.dp)
+                    .offset(x = (-35).dp)
+                    .padding(bottom = 8.dp)
             ) {
-                Icon(Icons.Outlined.DateRange, contentDescription = null)
+                Icon(
+                    Icons.Outlined.DateRange,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
 
-                Spacer(Modifier.width(5.dp))
+                Spacer(Modifier.width(6.dp))
 
                 Text(
                     text = selectedDate.format(formatterDatePicker),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontStyle = FontStyle.Italic
+                    style = MaterialTheme.typography.titleMedium,
+                    fontStyle = FontStyle.Italic,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    softWrap = false
                 )
             }
 
@@ -448,7 +459,9 @@ fun TimePickerModal(
                         .fillMaxWidth()
                         .padding(bottom = 20.dp)
                 )
+
                 TimePicker(state = timePickerState)
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -458,6 +471,7 @@ fun TimePickerModal(
                     TextButton(onClick = onDismiss) {
                         Text("Cancel·lar")
                     }
+
                     TextButton(
                         onClick = {
                             val hour = timePickerState.hour.toString().padStart(2, '0')
@@ -712,6 +726,7 @@ fun CreateAppointmentDialog(
                             modifier = Modifier.fillMaxWidth(),
                             enabled = !isHighRiskPatient
                         )
+
                         if (!isHighRiskPatient) {
                             Box(
                                 modifier = Modifier
@@ -732,6 +747,7 @@ fun CreateAppointmentDialog(
                             modifier = Modifier.fillMaxWidth(),
                             enabled = !isHighRiskPatient
                         )
+
                         if (!isHighRiskPatient) {
                             Box(
                                 modifier = Modifier
@@ -1017,6 +1033,7 @@ fun HourRow(
 
         Box(modifier = Modifier.fillMaxSize()) {
             val count = hourAppointments.size
+
             hourAppointments.forEachIndexed { index, appointment ->
                 val start = agendaExtractHourAndMinute(appointment.startDateTime) ?: "00:00"
                 val minutes = start.split(":").getOrNull(1)?.toIntOrNull() ?: 0
@@ -1031,8 +1048,6 @@ fun HourRow(
 
                 val offsetY = ((minutes / 60f) * rowHeight.value).dp
 
-                // If multiple appointments start in the same hour, we offset them slightly and reduce width
-                // to make them all somewhat visible even if they overlap.
                 val widthFraction = if (count > 1) 1f - (index * 0.05f) else 1f
                 val horizontalPaddingStart = (6 + (index * 12)).dp
 
@@ -1158,6 +1173,7 @@ fun AppointmentCard(
                     contentDescription = null,
                     tint = if (isHighRisk) Color(0xFFD32F2F) else Color.Gray
                 )
+
                 Icon(
                     Icons.Outlined.Person,
                     contentDescription = null,
@@ -1365,6 +1381,7 @@ fun agendaAppointmentDurationMinutes(
  */
 fun agendaExtractFormattedEndTime(dateTime: String?, gapMinutes: Long = 5): String? {
     val timeStr = agendaExtractHourAndMinute(dateTime) ?: return null
+
     return try {
         val time = LocalTime.parse(timeStr)
         time.minusMinutes(gapMinutes).format(DateTimeFormatter.ofPattern("HH:mm"))

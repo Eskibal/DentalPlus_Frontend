@@ -7,10 +7,16 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
 
+    /*
+     * Render puede tardar bastante en responder si el backend está dormido.
+     * Por eso dejamos timeouts más amplios que los 20 segundos originales.
+     */
     private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(20, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)
-        .writeTimeout(20, TimeUnit.SECONDS)
+        .connectTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS)
+        .callTimeout(75, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
         .build()
 
     private val retrofit: Retrofit by lazy {

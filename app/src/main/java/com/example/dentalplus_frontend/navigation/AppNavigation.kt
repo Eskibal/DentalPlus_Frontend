@@ -2,18 +2,27 @@ package com.example.dentalplus_frontend.navigation
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemColors
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -29,6 +38,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.dentalplus_frontend.R
 import com.example.dentalplus_frontend.model.OdontogramType
 import com.example.dentalplus_frontend.model.Quadrant
+import com.example.dentalplus_frontend.network.RetrofitClient
 import com.example.dentalplus_frontend.session.SessionManager
 import com.example.dentalplus_frontend.ui.AgendaScreen
 import com.example.dentalplus_frontend.ui.HomeScreen
@@ -50,19 +60,48 @@ fun AppNavigation() {
     val odontogramViewModel: OdontogramViewModel = viewModel()
     val loginViewModel: LoginViewModel = viewModel()
     val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
 
     val isLoading by loginViewModel.isLoading.collectAsState()
     val errorMessage by loginViewModel.errorMessage.collectAsState()
 
-    val startDestination = if (SessionManager(context).isLoggedIn()) {
-        Routes.HOME
-    } else {
-        Routes.LOGIN
+    var initialRoute by remember { mutableStateOf<String?>(null) }
+
+    /*
+     * Antes se entraba directamente a HOME si había cualquier token guardado.
+     * Ahora validamos el token contra /user/me.
+     * Si está caducado o no es válido, limpiamos sesión y mandamos al login.
+     */
+    LaunchedEffect(Unit) {
+        val bearerToken = sessionManager.getBearerToken()
+
+        if (bearerToken.isNullOrBlank()) {
+            initialRoute = Routes.LOGIN
+        } else {
+            try {
+                val response = RetrofitClient.userApi.getMyProfile(bearerToken)
+
+                if (response.isSuccessful) {
+                    initialRoute = Routes.HOME
+                } else {
+                    sessionManager.clearSession()
+                    initialRoute = Routes.LOGIN
+                }
+            } catch (e: Exception) {
+                sessionManager.clearSession()
+                initialRoute = Routes.LOGIN
+            }
+        }
+    }
+
+    if (initialRoute == null) {
+        SessionCheckScreen()
+        return
     }
 
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = initialRoute!!
     ) {
         composable(Routes.LOGIN) {
             LoginScreen(
@@ -170,6 +209,28 @@ fun AppNavigation() {
                 toothNumber = toothNumber,
                 viewModel = odontogramViewModel
             )
+        }
+    }
+}
+
+@Composable
+fun SessionCheckScreen() {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Header()
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
         }
     }
 }

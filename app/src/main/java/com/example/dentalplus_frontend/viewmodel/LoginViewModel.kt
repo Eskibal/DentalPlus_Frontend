@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.net.ConnectException
 import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 class LoginViewModel : ViewModel() {
 
@@ -62,17 +63,21 @@ class LoginViewModel : ViewModel() {
                     }
                 } else {
                     _errorMessage.value = when (response.code()) {
+                        400 -> "Petició incorrecta"
                         401 -> "Usuari o contrasenya incorrectes"
                         403 -> "No tens permisos per accedir"
                         404 -> "Endpoint de login no trobat"
                         500 -> "Error intern del servidor"
+                        502, 503, 504 -> "El servidor no està disponible ara mateix. Torna-ho a provar en uns segons."
                         else -> "Error de login: ${response.code()}"
                     }
                 }
-            } catch (e: ConnectException) {
-                _errorMessage.value = "No es pot connectar amb el backend. Revisa la IP, el port i el firewall."
             } catch (e: SocketTimeoutException) {
-                _errorMessage.value = "El backend triga massa a respondre"
+                _errorMessage.value = "El backend triga massa a respondre. Si està desplegat a Render, pot estar despertant-se. Torna-ho a provar."
+            } catch (e: UnknownHostException) {
+                _errorMessage.value = "No es pot resoldre l'adreça del backend. Revisa la connexió a Internet."
+            } catch (e: ConnectException) {
+                _errorMessage.value = "No es pot connectar amb el backend. Revisa la URL, la connexió i el servidor."
             } catch (e: Exception) {
                 _errorMessage.value = "Error inesperat: ${e.message}"
             } finally {
