@@ -1,5 +1,8 @@
 package com.example.dentalplus_frontend.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -23,15 +26,20 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Face
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -54,6 +62,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.dentalplus_frontend.R
+import com.example.dentalplus_frontend.model.DocumentDto
 import com.example.dentalplus_frontend.model.OdontogramType
 import com.example.dentalplus_frontend.navigation.BottomBar
 import com.example.dentalplus_frontend.navigation.Header
@@ -86,7 +95,7 @@ fun PatientScreen(
                 )
             }
 
-            uiState.errorMessage != null -> {
+            uiState.errorMessage != null && uiState.patient == null -> {
                 PatientErrorContent(
                     message = uiState.errorMessage ?: "S'ha produït un error",
                     onRetry = { patientDetailViewModel.loadPatient(context, patientId) },
@@ -98,6 +107,26 @@ fun PatientScreen(
                 PatientContent(
                     navController = navController,
                     uiState = uiState,
+                    onUploadDocuments = { uris ->
+                        patientDetailViewModel.uploadDocuments(
+                            context = context,
+                            patientId = patientId,
+                            uris = uris
+                        )
+                    },
+                    onDownloadDocument = { document ->
+                        patientDetailViewModel.downloadDocument(
+                            context = context,
+                            document = document
+                        )
+                    },
+                    onDeleteDocument = { documentId ->
+                        patientDetailViewModel.deleteDocument(
+                            context = context,
+                            patientId = patientId,
+                            documentId = documentId
+                        )
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -111,14 +140,54 @@ fun PatientScreen(
 fun PatientContent(
     navController: NavController,
     uiState: PatientDetailUiState,
+    onUploadDocuments: (List<Uri>) -> Unit,
+    onDownloadDocument: (DocumentDto) -> Unit,
+    onDeleteDocument: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showSelectionDialog by remember { mutableStateOf(false) }
+
+    val documentPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenMultipleDocuments(),
+        onResult = { uris ->
+            if (uris.isNotEmpty()) {
+                onUploadDocuments(uris)
+            }
+        }
+    )
 
     Column(
         modifier = modifier.verticalScroll(rememberScrollState())
     ) {
         PatientHeaderCard(uiState = uiState)
+
+        if (uiState.hasMedicalAlert) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            PatientMedicalAlertCard(
+                text = uiState.medicalAlertText
+            )
+        }
+
+        if (!uiState.errorMessage.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = uiState.errorMessage ?: "",
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(horizontal = 30.dp)
+            )
+        }
+
+        if (!uiState.successMessage.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = uiState.successMessage ?: "",
+                color = Color(0xFF2E7D32),
+                modifier = Modifier.padding(horizontal = 30.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -145,6 +214,19 @@ fun PatientContent(
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        PatientDocumentsBlock(
+            documents = uiState.documents,
+            isUploading = uiState.isUploadingDocument,
+            isDeleting = uiState.isDeletingDocument,
+            onUploadClick = {
+                documentPickerLauncher.launch(arrayOf("application/pdf"))
+            },
+            onDownloadDocument = onDownloadDocument,
+            onDeleteDocument = onDeleteDocument
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
         BigActionButton(
             text = "Odontograma",
             onClick = { showSelectionDialog = true }
@@ -161,6 +243,185 @@ fun PatientContent(
                 navController.navigate("odontogram/${uiState.patient?.patientId}/${type.name}")
             }
         )
+    }
+}
+
+@Composable
+fun PatientMedicalAlertCard(
+    text: String
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 30.dp),
+        shape = RoundedCornerShape(18.dp),
+        shadowElevation = 6.dp,
+        color = Color(0xFFFFF3CD),
+        contentColor = Color(0xFFE65100)
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Warning,
+                contentDescription = null,
+                modifier = Modifier.size(28.dp)
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column {
+                Text(
+                    text = "Alerta mèdica",
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun PatientDocumentsBlock(
+    documents: List<DocumentDto>,
+    isUploading: Boolean,
+    isDeleting: Boolean,
+    onUploadClick: () -> Unit,
+    onDownloadDocument: (DocumentDto) -> Unit,
+    onDeleteDocument: (Long) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 30.dp)
+    ) {
+        Text(
+            text = "Documents PDF",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            shadowElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Button(
+                    onClick = onUploadClick,
+                    enabled = !isUploading && !isDeleting,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp)
+                ) {
+                    if (isUploading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Text("Pujant...")
+                    } else {
+                        Icon(
+                            imageVector = Icons.Outlined.Add,
+                            contentDescription = null
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Text("Afegir PDFs")
+                    }
+                }
+
+                if (documents.isEmpty()) {
+                    HorizontalDivider(color = Color.Gray.copy(0.3f))
+
+                    Text(
+                        text = "Aquest pacient encara no té documents.",
+                        color = Color.Gray,
+                        modifier = Modifier.padding(14.dp)
+                    )
+                } else {
+                    documents.forEachIndexed { index, document ->
+                        HorizontalDivider(color = Color.Gray.copy(0.3f))
+
+                        PatientDocumentRow(
+                            document = document,
+                            isDeleting = isDeleting,
+                            onDownloadDocument = onDownloadDocument,
+                            onDeleteDocument = onDeleteDocument
+                        )
+
+                        if (index != documents.lastIndex) {
+                            HorizontalDivider(color = Color.Gray.copy(0.15f))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PatientDocumentRow(
+    document: DocumentDto,
+    isDeleting: Boolean,
+    onDownloadDocument: (DocumentDto) -> Unit,
+    onDeleteDocument: (Long) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = document.name ?: "Document sense nom",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Text(
+                text = document.documentType ?: "OTHER",
+                color = Color.Gray,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+
+        TextButton(
+            onClick = { onDownloadDocument(document) },
+            enabled = !document.url.isNullOrBlank() && !isDeleting
+        ) {
+            Text("Descarregar")
+        }
+
+        IconButton(
+            onClick = {
+                document.id?.let { id ->
+                    onDeleteDocument(id)
+                }
+            },
+            enabled = document.id != null && !isDeleting
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Delete,
+                contentDescription = "Eliminar document",
+                tint = Color(0xFFD32F2F)
+            )
+        }
     }
 }
 

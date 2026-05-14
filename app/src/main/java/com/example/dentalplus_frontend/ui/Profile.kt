@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -48,6 +49,7 @@ import coil.compose.AsyncImage
 import com.example.dentalplus_frontend.R
 import com.example.dentalplus_frontend.navigation.BottomBar
 import com.example.dentalplus_frontend.navigation.Header
+import com.example.dentalplus_frontend.navigation.Routes
 import com.example.dentalplus_frontend.viewmodel.ProfileUiState
 import com.example.dentalplus_frontend.viewmodel.ProfileViewModel
 
@@ -86,6 +88,16 @@ fun ProfileScreen(
             else -> {
                 ProfileContent(
                     uiState = uiState,
+                    onLogoutClick = {
+                        profileViewModel.logout(context)
+
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(navController.graph.id) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -98,6 +110,7 @@ fun ProfileScreen(
 @Composable
 fun ProfileContent(
     uiState: ProfileUiState,
+    onLogoutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(true) }
@@ -122,6 +135,35 @@ fun ProfileContent(
         ContactInfoBlock(uiState = uiState)
 
         Spacer(modifier = Modifier.height(30.dp))
+
+        LogoutButton(
+            onLogoutClick = onLogoutClick
+        )
+
+        Spacer(modifier = Modifier.height(30.dp))
+    }
+}
+
+@Composable
+fun LogoutButton(
+    onLogoutClick: () -> Unit
+) {
+    Button(
+        onClick = onLogoutClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFFD32F2F),
+            contentColor = Color.White
+        ),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 30.dp)
+            .height(52.dp)
+    ) {
+        Text(
+            text = "Tancar sessió",
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

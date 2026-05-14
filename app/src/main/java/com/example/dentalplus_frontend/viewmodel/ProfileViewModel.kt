@@ -98,6 +98,11 @@ class ProfileViewModel : ViewModel() {
             }
         }
     }
+
+    fun logout(context: Context) {
+        SessionManager(context).clearSession()
+        _uiState.value = ProfileUiState()
+    }
 }
 
 private fun ProfileDto.toProfileUiState(): ProfileUiState {

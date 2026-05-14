@@ -46,4 +46,8 @@ object RetrofitClient {
     val odontogramApi: OdontogramApi by lazy {
         retrofit.create(OdontogramApi::class.java)
     }
+
+    val documentApi: DocumentApi by lazy {
+        retrofit.create(DocumentApi::class.java)
+    }
 }

@@ -16,10 +16,15 @@ import java.time.LocalDate
 
 data class PatientListUiState(
     val isLoading: Boolean = false,
+    val isSaving: Boolean = false,
     val errorMessage: String? = null,
+    val successMessage: String? = null,
     val patients: List<BackendPatientDto> = emptyList(),
     val todayAppointments: List<BackendAppointmentDto> = emptyList()
 ) {
+    val activePatients: List<BackendPatientDto>
+        get() = patients.filter { it.active != false }
+
     val todayPatientIds: Set<Long>
         get() = todayAppointments
             .filter { it.active != false }
@@ -27,12 +32,12 @@ data class PatientListUiState(
             .toSet()
 
     val todayPatients: List<BackendPatientDto>
-        get() = patients.filter { patient ->
+        get() = activePatients.filter { patient ->
             patient.patientId != null && todayPatientIds.contains(patient.patientId)
         }
 
     val otherPatients: List<BackendPatientDto>
-        get() = patients.filter { patient ->
+        get() = activePatients.filter { patient ->
             patient.patientId == null || !todayPatientIds.contains(patient.patientId)
         }
 }
@@ -56,7 +61,8 @@ class PatientListViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
-                errorMessage = null
+                errorMessage = null,
+                successMessage = null
             )
 
             try {
@@ -73,7 +79,7 @@ class PatientListViewModel : ViewModel() {
                 )
 
                 if (patientsResponse.isSuccessful) {
-                    _uiState.value = PatientListUiState(
+                    _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         patients = patientsResponse.body().orEmpty(),
                         todayAppointments = if (appointmentsResponse.isSuccessful) {
@@ -88,7 +94,7 @@ class PatientListViewModel : ViewModel() {
                         }
                     )
                 } else {
-                    _uiState.value = PatientListUiState(
+                    _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         errorMessage = when (patientsResponse.code()) {
                             401 -> "Sessió caducada. Torna a iniciar sessió"
@@ -98,21 +104,165 @@ class PatientListViewModel : ViewModel() {
                     )
                 }
             } catch (e: ConnectException) {
-                _uiState.value = PatientListUiState(
+                _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = "No es pot connectar amb el backend"
                 )
             } catch (e: SocketTimeoutException) {
-                _uiState.value = PatientListUiState(
+                _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = "El backend triga massa a respondre"
                 )
             } catch (e: Exception) {
-                _uiState.value = PatientListUiState(
+                _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = "Error inesperat: ${e.message}"
                 )
             }
         }
+    }
+
+    fun createPatient(
+        context: Context,
+        patient: BackendPatientDto,
+        currentSearch: String,
+        onSuccess: () -> Unit
+    ) {
+        val token = SessionManager(context).getBearerToken()
+
+        if (token.isNullOrBlank()) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "No s'ha trobat cap sessió activa"
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isSaving = true,
+                errorMessage = null,
+                successMessage = null
+            )
+
+            try {
+                val response = RetrofitClient.patientApi.createPatient(
+                    token = token,
+                    patient = patient
+                )
+
+                if (response.isSuccessful) {
+                    _uiState.value = _uiState.value.copy(
+                        isSaving = false,
+                        successMessage = "Pacient creat correctament"
+                    )
+                    onSuccess()
+                    loadPatients(context, currentSearch)
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isSaving = false,
+                        errorMessage = when (response.code()) {
+                            401 -> "Sessió caducada. Torna a iniciar sessió"
+                            403 -> "No tens permisos per crear pacients"
+                            else -> "No s'ha pogut crear el pacient"
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    errorMessage = "Error inesperat: ${e.message}"
+                )
+            }
+        }
+    }
+
+    fun updatePatient(
+        context: Context,
+        patientId: Long,
+        patient: BackendPatientDto,
+        currentSearch: String,
+        onSuccess: () -> Unit
+    ) {
+        val token = SessionManager(context).getBearerToken()
+
+        if (token.isNullOrBlank()) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "No s'ha trobat cap sessió activa"
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isSaving = true,
+                errorMessage = null,
+                successMessage = null
+            )
+
+            try {
+                val response = RetrofitClient.patientApi.updatePatient(
+                    token = token,
+                    patientId = patientId,
+                    patient = patient
+                )
+
+                if (response.isSuccessful) {
+                    _uiState.value = _uiState.value.copy(
+                        isSaving = false,
+                        successMessage = "Pacient actualitzat correctament"
+                    )
+                    onSuccess()
+                    loadPatients(context, currentSearch)
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isSaving = false,
+                        errorMessage = when (response.code()) {
+                            401 -> "Sessió caducada. Torna a iniciar sessió"
+                            403 -> "No tens permisos per modificar pacients"
+                            404 -> "No s'ha trobat aquest pacient"
+                            else -> "No s'ha pogut actualitzar el pacient"
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    errorMessage = "Error inesperat: ${e.message}"
+                )
+            }
+        }
+    }
+
+    fun deactivatePatient(
+        context: Context,
+        patient: BackendPatientDto,
+        currentSearch: String,
+        onSuccess: () -> Unit
+    ) {
+        val patientId = patient.patientId
+
+        if (patientId == null) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "Aquest pacient no té ID"
+            )
+            return
+        }
+
+        val inactivePatient = patient.copy(active = false)
+
+        updatePatient(
+            context = context,
+            patientId = patientId,
+            patient = inactivePatient,
+            currentSearch = currentSearch,
+            onSuccess = onSuccess
+        )
+    }
+
+    fun clearMessages() {
+        _uiState.value = _uiState.value.copy(
+            errorMessage = null,
+            successMessage = null
+        )
     }
 }
