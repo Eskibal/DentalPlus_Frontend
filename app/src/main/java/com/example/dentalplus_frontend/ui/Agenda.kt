@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material.icons.outlined.DateRange
@@ -518,10 +519,7 @@ fun CreateAppointmentDialog(
     val isEditing = editingAppointment != null
 
     val treatments = listOf(
-        "Neteja bucal" to 30,
-        "Empastament" to 45,
-        "Extracció" to 60,
-        "Revisió" to 20,
+        "Endodòncia" to 60,
         "Ortodòncia" to 30
     )
 
@@ -535,17 +533,48 @@ fun CreateAppointmentDialog(
         mutableStateOf(editingAppointment?.treatment.orEmpty())
     }
 
-    var selectedDentist by remember(editingAppointment, uiState.availableDentists) {
+    val filteredDentists = remember(uiState.availableDentists, selectedTreatment) {
+        if (selectedTreatment.isBlank()) {
+            uiState.availableDentists
+        } else {
+            uiState.availableDentists.filter { dentist ->
+                val spec = dentist.speciality ?: ""
+                when (selectedTreatment) {
+                    "Endodòncia" -> {
+                        spec == "General Dentistry" ||
+                        spec == "Full Day General Dentistry" ||
+                        spec == "Endodontics"
+                    }
+                    "Ortodòncia" -> {
+                        spec == "General Dentistry" ||
+                        spec == "Full Day General Dentistry"
+                    }
+                    else -> false
+                }
+            }
+        }
+    }
+
+    var selectedDentist by remember(editingAppointment, filteredDentists) {
         mutableStateOf<AvailableDentistDto?>(
-            uiState.availableDentists.firstOrNull { it.id == editingAppointment?.dentistId }
+            filteredDentists.firstOrNull { it.id == editingAppointment?.dentistId }
                 ?: editingAppointment?.dentistId?.let {
                     AvailableDentistDto(
                         id = it,
                         fullName = editingAppointment.dentistName ?: "Dentista actual",
-                        speciality = null
+                        speciality = editingAppointment.treatment
                     )
                 }
         )
+    }
+
+    LaunchedEffect(filteredDentists) {
+        if (selectedDentist != null && selectedDentist?.id != null) {
+            val isStillAvailable = filteredDentists.any { it.id == selectedDentist?.id }
+            if (!isStillAvailable && (!isEditing || selectedDentist?.id != editingAppointment?.dentistId)) {
+                selectedDentist = null
+            }
+        }
     }
 
     var selectedBox by remember(editingAppointment, uiState.availableBoxes) {
@@ -789,7 +818,7 @@ fun CreateAppointmentDialog(
                 ExposedDropdownMenuBox(
                     expanded = dentistExpanded,
                     onExpandedChange = {
-                        if (uiState.availableDentists.isNotEmpty() || selectedDentist != null) {
+                        if (filteredDentists.isNotEmpty() || selectedDentist != null) {
                             dentistExpanded = !dentistExpanded
                         }
                     }
@@ -811,13 +840,22 @@ fun CreateAppointmentDialog(
                         expanded = dentistExpanded,
                         onDismissRequest = { dentistExpanded = false }
                     ) {
-                        uiState.availableDentists.forEach { dentist ->
+                        filteredDentists.forEach { dentist ->
                             DropdownMenuItem(
                                 text = {
-                                    Text(
-                                        text = dentist.fullName
-                                            ?: "Dentista #${dentist.id ?: "-"}"
-                                    )
+                                    Column {
+                                        Text(
+                                            text = dentist.fullName
+                                                ?: "Dentista #${dentist.id ?: "-"}"
+                                        )
+                                        if (!dentist.speciality.isNullOrBlank()) {
+                                            Text(
+                                                text = dentist.speciality,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = Color.Gray
+                                            )
+                                        }
+                                    }
                                 },
                                 onClick = {
                                     selectedDentist = dentist
@@ -882,6 +920,18 @@ fun CreateAppointmentDialog(
                     Text(
                         text = "Consulta la disponibilitat per carregar dentistes i boxes.",
                         color = Color.Gray,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                } else if (uiState.availableDentists.isNotEmpty()
+                    && filteredDentists.isEmpty()
+                    && !uiState.isLoadingAvailability
+                    && selectedTreatment.isNotBlank()
+                ) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "No hi ha dentistes especialistes en $selectedTreatment disponibles.",
+                        color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -1063,12 +1113,7 @@ fun HourRow(
                         .fillMaxWidth(widthFraction)
                         .heightIn(min = 48.dp)
                         .height(cardHeight)
-                        .padding(
-                            start = horizontalPaddingStart,
-                            end = 10.dp,
-                            top = 4.dp,
-                            bottom = 4.dp
-                        )
+                        .padding(start = horizontalPaddingStart, end = 10.dp, top = 4.dp, bottom = 4.dp)
                 )
             }
         }
@@ -1082,8 +1127,8 @@ fun AppointmentCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val backgroundColor = if (isHighRisk) Color(0xFFFFEBEE) else Color(0xFFEAF7FA)
-    val iconTintColor = if (isHighRisk) Color(0xFFD32F2F) else Blue40
+    val backgroundColor = if (isHighRisk) Color(0xFFFFF3CD) else Color(0xFFEAF7FA)
+    val iconTintColor = if (isHighRisk) Color(0xFFE65100) else Blue40
     val textColor = if (isHighRisk) Color(0xFFB71C1C) else Color(0xFF1F4E5F)
 
     Card(
@@ -1110,7 +1155,7 @@ fun AppointmentCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.DateRange,
+                    imageVector = if (isHighRisk) Icons.Filled.Warning else Icons.Outlined.DateRange,
                     contentDescription = null,
                     tint = iconTintColor
                 )
@@ -1148,36 +1193,31 @@ fun AppointmentCard(
 
                 if (appointment.treatment?.isNotBlank() == true) {
                     Text(
-                        text = appointment.treatment,
+                        text = "${appointment.treatment} - ${appointment.dentistName ?: "Dentista no assignat"}",
                         color = if (isHighRisk) Color(0xFFB71C1C) else Color(0xFF1F4E5F),
                         maxLines = 1,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium
                     )
                 }
-
-                Text(
-                    text = appointment.dentistName ?: "Dentista no assignat",
-                    color = if (isHighRisk) Color.DarkGray else Color.Gray,
-                    maxLines = 1,
-                    style = MaterialTheme.typography.labelSmall
-                )
             }
 
-            Column(
+            Column(modifier = Modifier.fillMaxHeight(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Bottom
             ) {
                 Icon(
                     Icons.Outlined.Face,
                     contentDescription = null,
-                    tint = if (isHighRisk) Color(0xFFD32F2F) else Color.Gray
+                    tint = if (isHighRisk) Color(0xFFD32F2F) else Color.Gray,
+                    modifier = Modifier.size(20.dp)
                 )
 
                 Icon(
                     Icons.Outlined.Person,
                     contentDescription = null,
-                    tint = if (isHighRisk) Color(0xFFD32F2F) else Color.Gray
+                    tint = if (isHighRisk) Color(0xFFD32F2F) else Color.Gray,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
