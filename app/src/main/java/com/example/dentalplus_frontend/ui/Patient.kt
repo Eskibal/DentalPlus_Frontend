@@ -214,6 +214,13 @@ fun PatientContent(
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        BigActionButton(
+            text = "Odontograma",
+            onClick = { showSelectionDialog = true }
+        )
+
+        Spacer(modifier = Modifier.height(30.dp))
+
         PatientDocumentsBlock(
             documents = uiState.documents,
             isUploading = uiState.isUploadingDocument,
@@ -227,12 +234,7 @@ fun PatientContent(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        BigActionButton(
-            text = "Odontograma",
-            onClick = { showSelectionDialog = true }
-        )
 
-        Spacer(modifier = Modifier.height(30.dp))
     }
 
     if (showSelectionDialog) {
