@@ -119,13 +119,6 @@ Para bugs o sugerencias, abre un [Issue](https://github.com/Eskibal/DentalPlus_F
  
 ---
  
-## 📄 Licencia
- 
-<!-- TODO: Añade la licencia correcta si la tienes definida -->
-Este proyecto está bajo la licencia MIT. Consulta el archivo `LICENSE` para más detalles.
- 
----
- 
 ## 👥 Equipo
 
 **Jean Patrick Esquibal Surop & Marc López Molina** - Desarrolladores Front-end & Diseñadores de la aplicación
