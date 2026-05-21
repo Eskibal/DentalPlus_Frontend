@@ -67,7 +67,7 @@ Asimismo, permitirá la planificación y organización de las visitas odontológ
    <!-- TODO: Indica dónde se configura la base URL (p.ej. local.properties o un archivo de config) -->
    ```
    # En local.properties o en el archivo de configuración correspondiente:
-   BASE_URL=https://tu-backend.com/api/
+   BASE_URL=https://dentalplus-backend.onrender.com/
    ```
  
 4. **Sincroniza Gradle y ejecuta**
@@ -127,8 +127,10 @@ Este proyecto está bajo la licencia MIT. Consulta el archivo `LICENSE` para má
 ---
  
 ## 👥 Equipo
- 
-Jean Patrick Esquibal Surop, Marc López Molina, Jiahao Liu, Adam Serroukh
+
+**Jean Patrick Esquibal Surop & Marc López Molina** - Desarrolladores Front-end & Diseñadores de la aplicación
+
+**Jiahao Liu & Adam Serroukh** - Desarrolladores Back-end & Gestores de la Base de datos
 
 Desarrollado con ❤️ por el equipo de **DentalPlus**.
  
