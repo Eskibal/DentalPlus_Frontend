@@ -120,8 +120,11 @@ Para bugs o sugerencias, abre un [Issue](https://github.com/Eskibal/DentalPlus_F
 ---
  
 ## 👥 Equipo
+<img src="https://github.com/Eskibal.png" width="50" alt="Avatar de Eskibal"> <img src="https://github.com/MarcLopezMolina.png" width="50" alt="Avatar de MarcLopezMolina">
 
 **Jean Patrick Esquibal Surop & Marc López Molina** - Desarrolladores Front-end & Diseñadores de la aplicación
+
+<img src="https://github.com/LiuUexe.png" width="50" alt="Avatar de LiuUexe"> <img src="https://github.com/askm6.png" width="50" alt="Avatar de askm6">
 
 **Jiahao Liu & Adam Serroukh** - Desarrolladores Back-end & Gestores de la Base de datos
 
@@ -131,3 +134,7 @@ Desarrollado con ❤️ por el equipo de **DentalPlus**.
 [![GitHub](https://img.shields.io/badge/GitHub-MarcLopezMolina-181717?style=flat&logo=github)](https://github.com/MarcLopezMolina)
 [![GitHub](https://img.shields.io/badge/GitHub-LiuUexe-181717?style=flat&logo=github)](https://github.com/LiuUexe)
 [![GitHub](https://img.shields.io/badge/GitHub-askm6-181717?style=flat&logo=github)](https://github.com/askm6)
+
+<p align="center">
+ <img src="https://github.com/Eskibal/DentalPlus_Frontend/blob/master/app/src/main/res/drawable/generic_logo_dentalplus.png" width="500" alt="DentalPlus">
+</p>
