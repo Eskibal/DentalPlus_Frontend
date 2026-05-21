@@ -72,8 +72,8 @@ Asimismo, permitirá la planificación y organización de las visitas odontológ
  
 4. **Sincroniza Gradle y ejecuta**
    ```
-   Build → Make Project  (o Ctrl+F9)
-   Run → Run 'app'       (o Shift+F10)
+   Build → Make Project    (o Ctrl+F9)
+   Run   → Run 'app'       (o Shift+F10)
    ```
  
 ---
