@@ -5,7 +5,7 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com/)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose) 
-<!-- [![Release](https://img.shields.io/badge/Release-v0.1.0-blue?style=for-the-badge)](https://github.com/Eskibal/DentalPlus_Frontend/releases) -->
+[![Release](https://img.shields.io/badge/Release-v0.2.0-blue?style=for-the-badge)](https://github.com/Eskibal/DentalPlus_Frontend/releases)
 
 ---
 
@@ -101,7 +101,9 @@ DentalPlus_Frontend/
  
 | Versión | Fecha | Notas |
 |---|---|---|
-| [v0.1.0](https://github.com/Eskibal/DentalPlus_Frontend/releases/tag/v.0.1.0) | Mayo 2026 | Primera versión pública |
+| [mockup](https://github.com/Eskibal/DentalPlus_Frontend/releases/tag/mockup) | Abril 2026 | Versión sin back-end conectado |
+| [v0.1.0](https://github.com/Eskibal/DentalPlus_Frontend/releases/tag/v.0.1.0) | Mayo 2026 | Primera versión funcional |
+| [v0.2.0](https://github.com/Eskibal/DentalPlus_Frontend/releases/tag/v.0.2.0) | Junio 2026 | Segunda versión final |
 <!-- TODO: Actualiza la tabla con cada nueva release -->
  
 ---
